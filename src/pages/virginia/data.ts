@@ -747,3 +747,34 @@ export const SONGS: MemorialSong[] = [
     titlePending: true,
   },
 ];
+
+
+/* ---------- Family video ---------- */
+
+export interface FamilyVideo {
+  src: string;
+  poster: string;
+  title: string;
+  description: string;
+  durationSeconds: number;
+}
+
+/**
+ * Her own video, supplied by the family 25 July 2026.
+ *
+ * This is NOT a funeral recording. It is Virginia alive and speaking, praising
+ * her daughter Nyasha on her graduation. It belongs in the Memorial room with
+ * her voice and her music, never with the service videos in the Journey room.
+ *
+ * Self-hosted, `preload="none"` — nothing downloads until a visitor presses
+ * play. Source was 8.3 MB; re-encoded to 2.1 MB with faststart so it begins
+ * without buffering the whole file.
+ */
+export const FAMILY_VIDEO: FamilyVideo = {
+  src: '/virginia-nyasha-graduation.mp4',
+  poster: '/virginia-nyasha-graduation-poster.jpg',
+  title: 'For Nyasha, on her graduation',
+  description:
+    'Virginia speaking about her daughter Nyasha on the day she graduated \u2014 her mother\u2019s own words, in her own voice.',
+  durationSeconds: 41,
+};

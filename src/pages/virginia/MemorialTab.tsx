@@ -6,6 +6,7 @@ import VoiceNotesTab from '@/pages/virginia/VoiceNotesTab';
 import GuestbookTab from '@/pages/virginia/GuestbookTab';
 import CandlesTab from '@/pages/virginia/CandlesTab';
 import SongsSection from '@/pages/virginia/SongsSection';
+import FamilyVideoSection from '@/pages/virginia/FamilyVideoSection';
 
 /**
  * TAB 2 — The Memorial.
@@ -42,6 +43,10 @@ export default function MemorialTab() {
 
       <section id="vg-voice" className="scroll-mt-36 border-t border-[color:var(--line)] pt-16 md:pt-24">
         <VoiceNotesTab />
+      </section>
+
+      <section id="vg-her-video" className="scroll-mt-36 border-t border-[color:var(--line)] pt-16 md:pt-24">
+        <FamilyVideoSection />
       </section>
 
       <section id="vg-guestbook" className="scroll-mt-36 border-t border-[color:var(--line)] pt-16 md:pt-24">
