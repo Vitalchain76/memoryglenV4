@@ -245,7 +245,17 @@ export const BOOKLET_EPIGRAPH = [
   'You are loved beyond words and missed beyond measure.',
 ];
 
+/**
+ * Her real voice. The audio file supplied by the family, 25 July 2026.
+ *
+ * Until now this player had no `src` and AudioPlayer fell back to SIMULATED
+ * playback — a progress bar that moved for a hardcoded 42 seconds and made no
+ * sound. The recording is 10 seconds. Never set a duration here that does not
+ * match the file.
+ */
 export const VOICE_NOTE = {
+  src: '/virginia-voice-note.mp3',
+  durationSeconds: 10,
   title: 'Happy New Year — A Message from Mum',
   description:
     'A cherished voice recording of Virginia wishing her family a Happy New Year. Her voice, warmth, and love continue to reach us through this precious recording.',
@@ -700,5 +710,40 @@ export const JOURNEY_STAGES: JourneyStage[] = [
       'Her family gathers to remember her on the anniversary of her passing, 19 May, and on her birthday, 7 June.',
       'On 19 May each year this memorial keeps Dusk.',
     ],
+  },
+];
+
+
+/* ---------- Songs ---------- */
+
+export interface MemorialSong {
+  title: string;
+  /** YouTube video id. */
+  youtubeId: string;
+  note?: string;
+  /** True when the family has not yet given the title. Never invent one. */
+  titlePending?: boolean;
+}
+
+/**
+ * Songs supplied by the family, 25 July 2026.
+ *
+ * Embedded through youtube-nocookie.com so a visitor to her memorial is not
+ * tracked by YouTube before they choose to play anything.
+ *
+ * The second song's title has NOT been supplied and could not be resolved.
+ * It is labelled honestly rather than guessed — set `title` and remove
+ * `titlePending` when the family names it.
+ */
+export const SONGS: MemorialSong[] = [
+  {
+    title: 'Mwari Mubatsiri Wedu',
+    youtubeId: 'xFXvaqHGtmM',
+    note: 'The hymn from her memorial booklet \u2014 the Shona setting of \u201cO God, Our Help in Ages Past\u201d.',
+  },
+  {
+    title: 'A song she loved',
+    youtubeId: '92nqcaZDrwY',
+    titlePending: true,
   },
 ];
