@@ -80,6 +80,10 @@ const SLUG_ORDER = [
   'lindiwe-ncube',
   'chipo-marufu',
   'themba-sibanda',
+  // Peters family — unlisted, reachable from the John Peters demo
+  'samuel-peters',
+  'ruth-peters',
+  'james-peters',
 ];
 
 const ASSETS: Record<string, MemorialAssets> = Object.fromEntries(

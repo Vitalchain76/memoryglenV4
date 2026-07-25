@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Crosshair, Download, Lock, Maximize2, ShieldCheck, X } from 'lucide-react';
+import { ArrowRight, Crosshair, Download, Lock, Maximize2, ShieldCheck, X } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import StatBand from '@/components/StatBand';
 import TierGate from '@/components/TierGate';
@@ -16,6 +16,8 @@ interface TreeNode {
   y: number;
   /** stone = deceased · living = active profile (evergreen ring) */
   kind: 'stone' | 'living';
+  /** Slug of this person's memorial page, when one exists. Deceased only. */
+  memorialSlug?: string;
   relation: string;
   glens: string[];
   legacyMember?: boolean;
@@ -32,10 +34,10 @@ interface TreeEdge {
 }
 
 const NODES: TreeNode[] = [
-  { id: 'samuel', name: 'Samuel Peters', years: '1931–2001', x: 340, y: 70, kind: 'stone', relation: 'Father of John', glens: ['Peters Family Glen'] },
-  { id: 'ruth', name: 'Ruth Peters', years: '1935–2011', x: 560, y: 70, kind: 'stone', relation: 'Mother of John', glens: ['Peters Family Glen'] },
-  { id: 'james', name: 'James Peters', years: '1961–2019', x: 170, y: 230, kind: 'stone', relation: 'Brother of John', glens: ['Peters Family Glen'] },
-  { id: 'john', name: 'John Peters', years: '1958–2026', x: 400, y: 230, kind: 'stone', relation: 'The remembered', glens: ['Peters Family Glen'] },
+  { id: 'samuel', name: 'Samuel Peters', memorialSlug: 'samuel-peters', years: '1931–2001', x: 340, y: 70, kind: 'stone', relation: 'Father of John', glens: ['Peters Family Glen'] },
+  { id: 'ruth', name: 'Ruth Peters', memorialSlug: 'ruth-peters', years: '1935–2011', x: 560, y: 70, kind: 'stone', relation: 'Mother of John', glens: ['Peters Family Glen'] },
+  { id: 'james', name: 'James Peters', memorialSlug: 'james-peters', years: '1961–2019', x: 170, y: 230, kind: 'stone', relation: 'Brother of John', glens: ['Peters Family Glen'] },
+  { id: 'john', name: 'John Peters', memorialSlug: 'john-peters', years: '1958–2026', x: 400, y: 230, kind: 'stone', relation: 'The remembered', glens: ['Peters Family Glen'] },
   { id: 'grace', name: 'Grace Peters', years: 'b. 1960', x: 580, y: 230, kind: 'living', relation: 'Wife of John', glens: ['Peters Family Glen'], legacyMember: true },
   { id: 'david', name: 'David Peters', years: 'b. 1986', x: 250, y: 400, kind: 'living', relation: 'Son of John & Grace · Harare', glens: ['Peters Family Glen', 'Chiweshe Family Glen'], legacyMember: true },
   { id: 'sarah', name: 'Sarah Miller', years: 'b. 1988', x: 500, y: 400, kind: 'living', relation: 'Daughter of John & Grace · London', glens: ['Peters Family Glen', 'Miller Family Glen'], legacyMember: true },
@@ -343,6 +345,17 @@ function NodeCard({ node, onClose }: { node: TreeNode; onClose: () => void }) {
           <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-brass px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-brass">
             <Lock size={11} aria-hidden /> Living Legacy member
           </p>
+        )}
+        {/* Deceased members with a memorial link straight through to it.
+            Living members never link — no page exists and consent rules apply. */}
+        {node.kind === 'stone' && node.memorialSlug && (
+          <Link
+            to={`/memorials/${node.memorialSlug}`}
+            onClick={onClose}
+            className="link-arrow mt-3 text-sm"
+          >
+            Visit memorial <ArrowRight size={14} aria-hidden />
+          </Link>
         )}
       </div>
       <button

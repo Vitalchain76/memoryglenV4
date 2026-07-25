@@ -47,6 +47,8 @@ interface Marker {
   note: string;
   candles?: number;
   kind: 'stone' | 'tree';
+  /** Slug of this person's memorial page, when one exists. */
+  memorialSlug?: string;
   /** Position over the grove (percentages). */
   x: number;
   y: number;
@@ -55,6 +57,7 @@ interface Marker {
 const MARKERS: Marker[] = [
   {
     id: 'john',
+    memorialSlug: 'john-peters',
     name: 'John Peters',
     years: '1958–2026',
     note: 'Husband, Father, Facilities Manager, Deacon. Built schools, built family, built legacy.',
@@ -65,6 +68,7 @@ const MARKERS: Marker[] = [
   },
   {
     id: 'samuel',
+    memorialSlug: 'samuel-peters',
     name: 'Samuel Peters',
     years: '1931–2001',
     note: 'Teacher, Elder, Storyteller. He taught John the worth of work.',
@@ -74,6 +78,7 @@ const MARKERS: Marker[] = [
   },
   {
     id: 'ruth',
+    memorialSlug: 'ruth-peters',
     name: 'Ruth Peters',
     years: '1935–2011',
     note: 'Nurse, Mother, Gardener. Her kitchen fed a whole street.',
@@ -83,6 +88,7 @@ const MARKERS: Marker[] = [
   },
   {
     id: 'james',
+    memorialSlug: 'james-peters',
     name: 'James Peters',
     years: '1961–2019',
     note: 'Brother, Uncle, Keeper of Stories. The laughing brother.',
@@ -424,7 +430,7 @@ function Grove({
               {selected.candles && (
                 <p className="type-meta mt-5 text-bone">{selected.candles} candles lit</p>
               )}
-              {selected.id === 'john' && (
+              {selected.memorialSlug === 'john-peters' ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -435,6 +441,16 @@ function Grove({
                 >
                   Visit memorial →
                 </button>
+              ) : (
+                selected.memorialSlug && (
+                  <Link
+                    to={`/memorials/${selected.memorialSlug}`}
+                    onClick={() => setSelected(null)}
+                    className="link-arrow mt-8 text-sm !text-brass-soft"
+                  >
+                    Visit memorial →
+                  </Link>
+                )
               )}
             </motion.aside>
           </>
