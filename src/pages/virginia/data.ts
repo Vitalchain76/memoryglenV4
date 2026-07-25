@@ -32,8 +32,12 @@ export interface Tribute {
   quote: string;
 }
 
-/** Tributes from her children and family — verbatim. */
-export const TRIBUTES: Tribute[] = [
+/**
+ * Tributes already written by the family — preserved exactly as they were.
+ * Never overwrite, never edit, never reword. These are her children's and
+ * family's own sentences.
+ */
+export const FAMILY_TRIBUTES: Tribute[] = [
   {
     name: 'Ray',
     relation: 'Son',
@@ -78,6 +82,53 @@ export const TRIBUTES: Tribute[] = [
   },
 ];
 
+/**
+ * Tributes printed in the memorial booklet (Gogo Chiimba, Vol. 1, p.2) under
+ * the heading "YOU WILL NEVER BE FORGOTTEN". Verbatim — a separate set from
+ * FAMILY_TRIBUTES above, written for a different occasion. Both are real and
+ * both are shown.
+ */
+export const BOOKLET_TRIBUTES: Tribute[] = [
+  {
+    name: 'Ray',
+    relation: 'Son',
+    quote:
+      'My beloved mother, on earth you prayed for me; in heaven, you speak to Him for me. With endless gratitude.',
+  },
+  {
+    name: 'Giri',
+    relation: 'Child',
+    quote:
+      'Mai Giri, you stood with me through every storm, protecting me with love and prayers. I lost a mother and a friend, but your strength lives in me forever.',
+  },
+  {
+    name: 'Dougie',
+    relation: 'Son',
+    quote:
+      'Mom, you were the cornerstone of my life \u2014 my safe harbor in the many storms of my life. You gave me a shoulder when I needed one and you loved me unconditionally. You left us too soon but you live on in my and your grandchildren\u2019s hearts.',
+  },
+  {
+    name: 'Hamu',
+    relation: 'Son',
+    quote:
+      'Mom, my guide, my friend, our family\u2019s light. Your love shaped our lives and will never fade. Till we meet again, with love.',
+  },
+];
+
+/**
+ * Children who have not yet added a tribute. Rendered as a quiet, dignified
+ * invitation rather than an empty gap — their place is held, not omitted.
+ * Remove a name from this list when their words arrive.
+ */
+export const TRIBUTES_AWAITED: { name: string; relation: string }[] = [
+  { name: 'Eddie', relation: 'Son' },
+  { name: 'Taka', relation: 'Son' },
+  { name: 'Nyasha', relation: 'Daughter' },
+];
+
+export const TRIBUTES_AWAITED_COPY =
+  'A place is kept here for their words, for whenever they are ready.';
+
 export const SCRIPTURES = [
   {
     reference: 'John 14:1-3',
@@ -89,22 +140,109 @@ export const SCRIPTURES = [
   },
 ];
 
+/**
+ * The hymn — verbatim from the family memorial booklet (Gogo Chiimba, Vol. 1, p.1).
+ *
+ * CORRECTION 25 Jul 2026: previously rendered as a single line reading
+ * "Mvari mubatsiri wedu…" with a paraphrased translation. "Mvari" was a
+ * misspelling of "Mwari" (God). Restored to the full two stanzas as printed
+ * in the booklet.
+ *
+ * This is the Shona setting of "O God, Our Help in Ages Past" — Isaac Watts,
+ * 1719, a paraphrase of Psalm 90. Watts's English is public domain.
+ */
 export const HYMN = {
-  shona: 'Mvari mubatsiri wedu, tichava nemi nguva dzose.',
-  translation: '(God our helper, we will be with You always.)',
+  shonaTitle: 'Mwari Mubatsiri Wedu',
+  englishTitle: 'O God, Our Help in Ages Past',
+  attribution: 'Isaac Watts, 1719 — from Psalm 90',
+  /** Shona, verbatim from the booklet. */
+  shona: [
+    [
+      'Mwari mubatsiri wedu',
+      'Dakara nazvino,',
+      'Mudziviriri munhamo',
+      'Nebanza narini.',
+      'Zvese zvisati zvasikwa',
+      'Makomo nepasi',
+      'Imi makanga muripo',
+      'Mugari narini.',
+    ],
+    [
+      'Kuneni misi mizhinji',
+      'Inenge kanguva',
+      'Senguva yemangwanani',
+      'Kusati kwayedza',
+      'Nhambwe dzinomburumbuka',
+      'Nemisi yesezve.',
+      'Zvinokanganika zvese',
+      'Sekurota hope.',
+    ],
+  ],
+  /** Watts's original English, matched stanza for stanza. */
+  english: [
+    [
+      'O God, our help in ages past,',
+      'Our hope for years to come,',
+      'Our shelter from the stormy blast,',
+      'And our eternal home.',
+    ],
+    [
+      'A thousand ages in Thy sight',
+      'Are like an evening gone;',
+      'Short as the watch that ends the night',
+      'Before the rising sun.',
+    ],
+  ],
 };
 
-/** Poem — "Forever in Our Hearts" (verbatim, 9 lines). */
-export const POEM_LINES = [
-  'Though you have journeyed beyond our sight,',
-  'Your love remains our guiding light.',
-  'In every prayer, in every song,',
-  'Your spirit walks with us along.',
-  'The lessons taught, the stories shared,',
-  'The way you showed us that you cared —',
-  'These gifts of love will never part,',
-  'For you live forever in our hearts.',
-  'Rest in peace, Virginia Dadirayi Chiimba. Your memory is our blessing.',
+/**
+ * Poem — "Forever in our hearts", verbatim from the memorial booklet (p.4).
+ *
+ * NOTE: stanza 2 line 2 reads "In every thought, you we still find" — the
+ * inverted word order is exactly as the family printed it and is deliberately
+ * preserved. Do not "correct" it.
+ */
+export const POEM_TITLE = 'Forever in our hearts';
+
+export const POEM_STANZAS: string[][] = [
+  [
+    'Your spirit dances through our days,',
+    'In the little things, in subtle ways.',
+    'A kind word, a laugh, a glance,',
+    'We still feel you in every chance.',
+    'Forever cherished, forever bright,',
+    'Your memory shines like morning light.',
+  ],
+  [
+    'Gone from sight but not from mind,',
+    'In every thought, you we still find.',
+    'Your smile, your touch, your gentle ways,',
+    'Live in our hearts through all our days.',
+    'Though we cannot see you anymore,',
+    'Your memory opens heaven\u2019s door.',
+  ],
+  [
+    'Though your hands we no longer hold,',
+    'Your stories, your love, your heart of gold,',
+    'Remain with us in every smile,',
+    'In quiet moments and each mile.',
+    'Memories bloom like endless flowers,',
+    'Filling our days with gentle showers.',
+  ],
+  [
+    'No shadow of time can dim your glow,',
+    'No distance can make our love go.',
+    'You shaped our lives, left joy behind,',
+    'And in our hearts, you\u2019re intertwined.',
+    'Memories of you will never sever,',
+    'You live in us, now and forever.',
+  ],
+];
+
+/** Closing couplet — booklet, final page. */
+export const BOOKLET_EPIGRAPH = [
+  'Your life was a blessing, your memory a treasure.',
+  'You are loved beyond words and missed beyond measure.',
 ];
 
 export const VOICE_NOTE = {
@@ -208,6 +346,30 @@ export interface FamilyMember {
   birthYear?: number;
 }
 
+/**
+ * Her parents and her nine siblings. She was the firstborn of ten and none of
+ * them are yet named on her memorial.
+ *
+ * PENDING: Gilbert will supply the real names. Do not invent, infer or guess
+ * any name here — leave the arrays empty until the family provides them. The
+ * page holds the place rather than filling it.
+ */
+export const PARENTS: FamilyMember[] = [];
+export const SIBLINGS: FamilyMember[] = [];
+export const SIBLING_COUNT = 9;
+
+export const ORIGIN_FAMILY_COPY =
+  'Virginia was the firstborn of ten. Her parents and her nine brothers and sisters belong on this page, and a place is kept for them here until their names are added.';
+
+/**
+ * Her schooling, working life and early years.
+ *
+ * PENDING: deliberately empty. The family will supply this. Nothing is to be
+ * written here from inference — the current biography says what she meant to
+ * her children; what she did with her working life is not yet recorded.
+ */
+export const EARLY_LIFE: string[] = [];
+
 export const CHILDREN: FamilyMember[] = [
   { name: 'Ray Chiimba', relation: 'Son', birthYear: 1973 },
   { name: 'Eddie Chiimba', relation: 'Son', birthYear: 1974 },
@@ -285,13 +447,13 @@ export const GUESTBOOK: GuestbookEntry[] = [
 
 /** The 12 candles lit 20–23 May 2025 — names and quotes per the live memorial. */
 export const CANDLES: Candle[] = [
-  { name: 'Ray', message: TRIBUTES[0].quote, date: '20 May 2025' },
-  { name: 'Giri', message: TRIBUTES[1].quote, date: '20 May 2025' },
-  { name: 'Dougie', message: TRIBUTES[2].quote, date: '20 May 2025' },
-  { name: 'Hamu', message: TRIBUTES[3].quote, date: '21 May 2025' },
-  { name: 'Mazvita', message: TRIBUTES[4].quote, date: '21 May 2025' },
-  { name: 'Tyler Tinaye Gilbert Chiimba (Grandson)', message: TRIBUTES[5].quote, date: '21 May 2025' },
-  { name: 'Carol', message: TRIBUTES[6].quote, date: '22 May 2025' },
+  { name: 'Ray', message: FAMILY_TRIBUTES[0].quote, date: '20 May 2025' },
+  { name: 'Giri', message: FAMILY_TRIBUTES[1].quote, date: '20 May 2025' },
+  { name: 'Dougie', message: FAMILY_TRIBUTES[2].quote, date: '20 May 2025' },
+  { name: 'Hamu', message: FAMILY_TRIBUTES[3].quote, date: '21 May 2025' },
+  { name: 'Mazvita', message: FAMILY_TRIBUTES[4].quote, date: '21 May 2025' },
+  { name: 'Tyler Tinaye Gilbert Chiimba (Grandson)', message: FAMILY_TRIBUTES[5].quote, date: '21 May 2025' },
+  { name: 'Carol', message: FAMILY_TRIBUTES[6].quote, date: '22 May 2025' },
   {
     name: 'Eddie',
     message: 'Thank you for being our guiding light through every season. We will carry your love with us always.',

@@ -1,5 +1,5 @@
 import Reveal from '@/components/Reveal';
-import { BIOGRAPHY, TRIBUTES } from '@/pages/virginia/data';
+import { BIOGRAPHY, FAMILY_TRIBUTES } from '@/pages/virginia/data';
 
 const SECTIONS = [
   { id: 'early-years', label: 'Early Years' },
@@ -10,7 +10,7 @@ const SECTIONS = [
 ];
 
 function PullQuote({ tributeIndex }: { tributeIndex: number }) {
-  const t = TRIBUTES[tributeIndex];
+  const t = FAMILY_TRIBUTES[tributeIndex];
   return (
     <Reveal>
       <blockquote className="my-10 border-l-2 border-brass pl-6">
