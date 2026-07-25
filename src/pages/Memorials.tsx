@@ -7,6 +7,8 @@ import Reveal from '@/components/Reveal';
 import PrivacyBadge from '@/components/PrivacyBadge';
 import ServiceProviderRail from '@/components/ServiceProviderRail';
 import type { ServiceProvider } from '@/components/ServiceProviderRail';
+import { MEMORIALS } from '@/data/memorials';
+import { getAssets } from '@/data/memorialAssets';
 import { cn } from '@/lib/utils';
 
 /* ---------- Section 2 data — filters ---------- */
@@ -20,6 +22,7 @@ const ERAS: EraFilter[] = ['All', '2010s', '2020s'];
 const TOTAL_PUBLIC = 128;
 
 interface SeedMemorial {
+  slug: string;
   name: string;
   born: number;
   died: number;
@@ -34,20 +37,45 @@ interface SeedMemorial {
   tone: string;
 }
 
-const SEED_MEMORIALS: SeedMemorial[] = [
-  { name: 'Tendai Moyo', born: 1941, died: 2024, place: 'Bulawayo', country: 'Zimbabwe', candles: 86, livestream: true, voice: true, tone: 'from-forest to-forest-deep' },
-  { name: 'Sipho Nkosi', born: 1960, died: 2025, place: 'Durban', country: 'South Africa', candles: 132, voice: true, tone: 'from-evergreen to-forest' },
-  { name: 'Mai Chiweshe', born: 1938, died: 2023, place: 'Masvingo', country: 'Zimbabwe', candles: 54, voice: true, tone: 'from-forest-soft to-forest-deep' },
-  { name: 'Thandiwe Dlamini', born: 1952, died: 2025, place: 'Johannesburg', country: 'South Africa', candles: 201, livestream: true, tone: 'from-forest to-evergreen' },
-  { name: 'Kuda Mapfumo', born: 1947, died: 2021, place: 'Mutare', country: 'Zimbabwe', candles: 63, tone: 'from-forest-deep to-forest' },
-  { name: 'Naledi Mokoena', born: 1965, died: 2024, place: 'Cape Town', country: 'South Africa', candles: 118, livestream: true, voice: true, tone: 'from-evergreen to-forest-deep' },
-  { name: 'Sekuru Banda', born: 1929, died: 2019, place: 'Gweru', country: 'Zimbabwe', candles: 41, tone: 'from-forest to-forest-soft' },
-  { name: 'Ayanda Khumalo', born: 1988, died: 2020, place: 'London', country: 'Diaspora', candles: 307, livestream: true, voice: true, tone: 'from-forest-soft to-evergreen' },
-  { name: 'Mbuya Takawira', born: 1935, died: 2018, place: 'Chinhoyi', country: 'Zimbabwe', candles: 29, tone: 'from-forest-deep to-evergreen' },
-  { name: 'Pieter van Wyk', born: 1954, died: 2022, place: 'Pretoria', country: 'South Africa', candles: 77, tone: 'from-evergreen to-forest-soft' },
-  { name: 'Rudo Chikafu', born: 1971, died: 2025, place: 'Toronto', country: 'Diaspora', candles: 144, voice: true, tone: 'from-forest to-forest-deep' },
-  { name: 'Baba Solomon Moyo', born: 1930, died: 2022, place: 'Harare', country: 'Zimbabwe', candles: 512, livestream: true, community: true, tone: 'from-forest-deep to-forest-soft' },
-];
+/** Location → country bucket for the directory filters. */
+const COUNTRY_BY_PLACE: Record<string, Country> = {
+  Bulawayo: 'Zimbabwe',
+  Masvingo: 'Zimbabwe',
+  Mutare: 'Zimbabwe',
+  Gweru: 'Zimbabwe',
+  Chinhoyi: 'Zimbabwe',
+  Harare: 'Zimbabwe',
+  Kwekwe: 'Zimbabwe',
+  Kadoma: 'Zimbabwe',
+  Marondera: 'Zimbabwe',
+  Chegutu: 'Zimbabwe',
+  'Victoria Falls': 'Zimbabwe',
+  Durban: 'South Africa',
+  Johannesburg: 'South Africa',
+  'Cape Town': 'South Africa',
+  Pretoria: 'South Africa',
+  London: 'Diaspora',
+  Toronto: 'Diaspora',
+};
+
+/**
+ * Directory cards are derived from the memorial content pack, so the index-card
+ * facts (years, place, features, candle counts) can never drift from the
+ * memorial pages themselves. `memorials.json` is the single source of truth.
+ */
+const SEED_MEMORIALS: SeedMemorial[] = MEMORIALS.map((m) => ({
+  slug: m.slug,
+  name: m.name,
+  born: m.birthYear,
+  died: m.deathYear,
+  place: m.location,
+  country: COUNTRY_BY_PLACE[m.location] ?? 'Diaspora',
+  candles: m.candles,
+  livestream: m.features.includes('livestream'),
+  voice: m.features.includes('voiceNotes'),
+  community: m.communityMemorial,
+  tone: getAssets(m.slug).portraitTone,
+}));
 
 const RAIL_PROVIDERS: ServiceProvider[] = [
   {
@@ -182,7 +210,10 @@ function FeaturedCard({
 
 function MemorialCard({ memorial }: { memorial: SeedMemorial }) {
   return (
-    <article className="card-raised group h-full overflow-hidden border border-transparent transition-all duration-200 hover:-translate-y-0.5 hover:border-brass/50">
+    <Link
+      to={`/memorials/${memorial.slug}`}
+      className="card-raised group block h-full overflow-hidden border border-transparent transition-all duration-200 hover:-translate-y-0.5 hover:border-brass/50"
+    >
       {/* 4:5 portrait placeholder — silhouette/tree motif, never a fake face */}
       <div
         aria-hidden
@@ -219,8 +250,11 @@ function MemorialCard({ memorial }: { memorial: SeedMemorial }) {
             Unofficial community memorial — not affiliated with or endorsed by the estate.
           </p>
         )}
+        <span className="link-arrow mt-4">
+          Visit Memorial <ArrowRight size={14} aria-hidden />
+        </span>
       </div>
-    </article>
+    </Link>
   );
 }
 
@@ -380,7 +414,7 @@ export default function Memorials() {
                 <AnimatePresence mode="popLayout">
                   {visible.map((m, i) => (
                     <motion.li
-                      key={m.name}
+                      key={m.slug}
                       layout
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}

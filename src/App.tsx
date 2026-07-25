@@ -4,6 +4,7 @@ import Home from '@/pages/Home';
 import Memorials from '@/pages/Memorials';
 import MemorialVirginia from '@/pages/MemorialVirginia';
 import JohnPetersMemorial from '@/pages/JohnPetersMemorial';
+import MemorialPage from '@/pages/MemorialPage';
 import Themes from '@/pages/Themes';
 import FuneralParlours from '@/pages/FuneralParlours';
 import BurialSocieties from '@/pages/BurialSocieties';
@@ -23,6 +24,9 @@ export default function App() {
         <Route path="/memorials" element={<Memorials />} />
         <Route path="/memorials/virginia-dadirayi-chiimba" element={<MemorialVirginia />} />
         <Route path="/memorials/john-peters" element={<JohnPetersMemorial />} />
+        {/* Every other slug falls back to the content-pack dataset.
+            Declared AFTER the two template routes so they always win. */}
+        <Route path="/memorials/:slug" element={<MemorialPage />} />
         <Route path="/themes" element={<Themes />} />
         <Route path="/funeral-parlours" element={<FuneralParlours />} />
         <Route path="/funeral-parlours/register" element={<Navigate to="/funeral-parlours" replace />} />
