@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils';
 import { Link } from 'react-router';
 import { Phone } from 'lucide-react';
 
@@ -125,9 +126,13 @@ export default function ServiceProviderRail({
   );
 
   return (
-    <div className={className}>
+    // Full width when stacked below the content; a fixed 280px column only from
+    // xl up, where the sticky sidebar layout applies. Without this the inline
+    // panel becomes a flex sibling of the memorial content on narrow screens
+    // and squeezes it into an unreadable column.
+    <div className={cn('w-full min-w-0 xl:w-[280px] xl:flex-none', className)}>
       {/* Sticky rail — ≥1280px only */}
-      <aside className="hidden w-[280px] flex-none xl:block" aria-label="Family service providers">
+      <aside className="hidden xl:block" aria-label="Family service providers">
         <div className="sticky top-24">{body}</div>
       </aside>
       {/* Inline collapse — below 1280px */}

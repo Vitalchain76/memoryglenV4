@@ -465,7 +465,7 @@ function MemorialBody({ memorial }: { memorial: Memorial }) {
       <Hero memorial={memorial} onLightCandle={scrollToCandles} />
 
       <div className="container-content py-16 md:py-24">
-        <div className="flex gap-12">
+        <div className="flex flex-col gap-12 xl:flex-row">
           <div className="min-w-0 flex-1 space-y-16 md:space-y-24">
             {/* 1 — Biography */}
             <section aria-labelledby="their-life">

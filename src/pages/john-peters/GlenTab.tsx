@@ -653,7 +653,7 @@ export default function GlenTab({ onNavigate }: { onNavigate: (tab: JohnPetersTa
       <Grove onNavigate={onNavigate} />
 
       {/* Sections 3–7: management & explainer — the rail returns here */}
-      <div className="container-content mt-16 flex gap-12">
+      <div className="container-content mt-16 flex flex-col gap-12 xl:flex-row">
         <div className="w-full min-w-0">
           <GlenTierGate />
           <HowAGlenWorks />
