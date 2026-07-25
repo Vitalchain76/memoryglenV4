@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 240" width="120" height="240">
+  <!-- MemoryGlen candle. The flame group is separate so CSS can animate it. -->
+  <g id="candle-body">
+    <rect x="35" y="110" width="50" height="118" rx="4" fill="#16302B"/>
+    <rect x="35" y="110" width="50" height="10" rx="4" fill="#1E4038"/>
+    <path d="M35 124 C42 132 46 122 52 128 C58 134 62 124 68 130 C74 136 80 126 85 132 L85 110 L35 110 Z" fill="#1E4038"/>
+    <rect x="57" y="96" width="6" height="16" rx="3" fill="#0E211D"/>
+    <rect x="28" y="226" width="64" height="8" rx="3" fill="#0E211D"/>
+  </g>
+  <g id="candle-flame" transform-origin="60 96">
+    <ellipse cx="60" cy="78" rx="26" ry="30" fill="#D9C08A" opacity="0.18"/>
+    <path d="M60 100 C48 82 56 62 60 44 C64 62 72 82 60 100 Z" fill="#C4A24C"/>
+    <path d="M60 96 C53 84 58 70 60 60 C62 70 67 84 60 96 Z" fill="#B4552D" opacity="0.85"/>
+    <path d="M60 92 C56 84 59 76 60 70 C61 76 64 84 60 92 Z" fill="#F6F1E7" opacity="0.9"/>
+  </g>
+</svg>

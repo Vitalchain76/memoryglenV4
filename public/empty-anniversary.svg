@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <!-- unlit candle beside a small calendar, sage/brass on transparent -->
+  <g stroke="#8FA896" stroke-width="5">
+    <!-- candle body -->
+    <path d="M170 190 V330"/>
+    <path d="M140 330 H200"/>
+    <rect x="140" y="190" width="60" height="140" rx="4"/>
+    <!-- wick -->
+    <path d="M170 190 V172" stroke-width="4"/>
+    <!-- unlit wisp of smoke -->
+    <path d="M170 164 C164 152 176 146 170 134 C166 126 172 120 170 112" stroke-width="3" opacity="0.6"/>
+    <!-- wax drip -->
+    <path d="M140 206 C148 214 152 206 158 212" stroke-width="3" opacity="0.6"/>
+  </g>
+  <!-- small calendar -->
+  <g stroke="#8FA896" stroke-width="5">
+    <rect x="300" y="170" width="180" height="160" rx="8"/>
+    <path d="M300 214 H480"/>
+    <path d="M340 152 V184 M440 152 V184" stroke="#C4A24C"/>
+  </g>
+  <g stroke="#8FA896" stroke-width="3" opacity="0.75">
+    <path d="M324 240 H348 M372 240 H396 M420 240 H444"/>
+    <path d="M324 268 H348 M372 268 H396 M420 268 H444"/>
+    <path d="M324 296 H348 M372 296 H396"/>
+  </g>
+  <!-- brass circled day -->
+  <circle cx="384" cy="268" r="16" stroke="#C4A24C" stroke-width="3.5"/>
+  <!-- tiny unlit flame outline above candle -->
+  <path d="M170 96 C162 82 168 68 170 60 C172 68 178 82 170 96 Z" stroke="#C4A24C" stroke-width="3" opacity="0.7" stroke-dasharray="4 5"/>
+  <!-- ground rule -->
+  <path d="M110 348 H510" stroke="#C4A24C" stroke-width="2" opacity="0.6"/>
+</svg>

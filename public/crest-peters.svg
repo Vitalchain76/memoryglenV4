@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <circle cx="200" cy="200" r="196" fill="#16302B"/>
+  <g fill="none" stroke="#C4A24C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="200" cy="200" r="176"/>
+    <circle cx="200" cy="200" r="164" stroke-width="1.5"/>
+    <!-- small tree at center -->
+    <path d="M200 262 V196"/>
+    <path d="M200 196 C200 180 190 172 174 168 C182 184 190 192 200 196 Z"/>
+    <path d="M200 196 C200 180 210 172 226 168 C218 184 210 192 200 196 Z"/>
+    <path d="M200 216 C194 204 184 198 170 196 C178 210 189 216 200 216 Z"/>
+    <path d="M200 216 C206 204 216 198 230 196 C222 210 211 216 200 216 Z"/>
+    <path d="M182 268 C190 262 210 262 218 268"/>
+    <!-- crossed carpenter's square (lower-left to upper-right) -->
+    <path d="M118 282 L236 164"/>
+    <path d="M236 164 L262 190"/>
+    <path d="M236 164 L210 138"/>
+    <!-- protea flower (upper-left to lower-right) -->
+    <path d="M282 118 L164 236"/>
+    <path d="M282 118 C276 104 282 92 296 86 C294 102 290 112 282 118 Z"/>
+    <path d="M282 118 C292 108 306 108 316 116 C304 124 292 124 282 118 Z"/>
+    <path d="M282 118 C270 116 262 108 260 96 C272 100 280 108 282 118 Z"/>
+    <!-- star accents -->
+    <path d="M200 52 l0 0" stroke-width="6"/>
+    <circle cx="200" cy="52" r="2.5" fill="#C4A24C" stroke="none"/>
+    <circle cx="200" cy="348" r="2.5" fill="#C4A24C" stroke="none"/>
+    <circle cx="52" cy="200" r="2.5" fill="#C4A24C" stroke="none"/>
+    <circle cx="348" cy="200" r="2.5" fill="#C4A24C" stroke="none"/>
+  </g>
+</svg>
