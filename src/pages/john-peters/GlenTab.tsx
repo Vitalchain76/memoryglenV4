@@ -670,6 +670,39 @@ export default function GlenTab({ onNavigate }: { onNavigate: (tab: JohnPetersTa
               </p>
             </Reveal>
           </section>
+
+          {/* Where he rests — the real photographs of the glen */}
+          <section aria-labelledby="jp-resting" className="mt-20">
+            <Reveal>
+              <p className="eyebrow">Where He Rests</p>
+              <h2 id="jp-resting" className="type-h2 mt-4 text-body">
+                The Peters Family Glen
+              </h2>
+              <p className="mt-4 max-w-reading leading-relaxed text-soft">
+                Glen Forest Memorial Park, Harare. The family plot was established in 1987;
+                John rests beneath the msasa he chose himself.
+              </p>
+            </Reveal>
+            <ul className="mt-8 grid gap-4 sm:grid-cols-3">
+              {[
+                { src: '/john-glen-gates.jpg', caption: 'The gates at Glen Forest' },
+                { src: '/john-glen-graves.jpg', caption: 'The family plot' },
+                { src: '/john-headstone.jpg', caption: 'John Peters \u00b7 1958 \u2013 2026' },
+              ].map((photo, i) => (
+                <Reveal as="li" key={photo.src} delay={i * 0.06}>
+                  <figure>
+                    <img
+                      src={photo.src}
+                      alt={photo.caption}
+                      loading="lazy"
+                      className="aspect-[4/3] w-full rounded-sm object-cover"
+                    />
+                    <figcaption className="type-meta mt-2 text-soft">{photo.caption}</figcaption>
+                  </figure>
+                </Reveal>
+              ))}
+            </ul>
+          </section>
         </div>
         <ServiceProviderRail providers={RAIL_PROVIDERS} />
       </div>

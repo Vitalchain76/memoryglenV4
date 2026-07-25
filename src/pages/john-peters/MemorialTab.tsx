@@ -118,12 +118,12 @@ function LifeStory() {
 
 /* ---------- Section 2 — Photo Gallery + Lightbox (design.md §7.14) ---------- */
 const GALLERY = [
-  { src: '/john-life-1.jpg', caption: 'Mutare, 1976 — the school he built' },
-  { src: '/john-life-2.jpg', caption: 'The choir years' },
-  { src: '/john-life-3.jpg', caption: 'Family under the msasa tree' },
-  { src: '/john-life-4.jpg', caption: 'Measure twice, cut once' },
-  { src: '/john-life-5.jpg', caption: 'N1 north, the road home' },
-  { src: '/john-life-6.jpg', caption: 'Beitbridge, 03:15 — the crossing' },
+  { src: '/john-younger.jpg', caption: 'A younger man' },
+  { src: '/john-at-home.jpg', caption: 'The morning paper, on the veranda' },
+  { src: '/john-community.jpg', caption: 'Among his congregation' },
+  { src: '/john-with-family.jpg', caption: 'With his family' },
+  { src: '/john-family-dinner.jpg', caption: 'The table, full' },
+  { src: '/john-portrait.jpg', caption: 'John' },
 ];
 
 function Gallery() {
@@ -295,12 +295,12 @@ function Songs() {
             {
               title: 'Sunday Hymns — compiled by the family',
               artist: 'Spotify playlist',
-              thumbnail: '/john-life-2.jpg',
+              thumbnail: '/john-at-home.jpg',
             },
           ]}
           youtubeTracks={[
-            { title: 'The hymn sung at his burial', artist: 'YouTube', thumbnail: '/john-life-2.jpg' },
-            { title: 'His favourite choir recording', artist: 'YouTube', thumbnail: '/john-life-3.jpg' },
+            { title: 'The hymn sung at his burial', artist: 'YouTube', thumbnail: '/john-at-home.jpg' },
+            { title: 'His favourite choir recording', artist: 'YouTube', thumbnail: '/john-with-family.jpg' },
           ]}
           uploadedTracks={[
             {

@@ -90,7 +90,7 @@ function MemorialHero({ onLightCandle }: { onLightCandle: () => void }) {
         >
           <span aria-hidden className="pointer-events-none absolute inset-1.5 border border-brass" />
           <img
-            src="/memorial-john-portrait.jpg"
+            src="/john-portrait.jpg"
             alt="Portrait of John Peters, a fictional elderly Zimbabwean gentleman, hands clasped in golden window light"
             width={200}
             height={250}

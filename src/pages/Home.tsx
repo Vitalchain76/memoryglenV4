@@ -66,13 +66,13 @@ const FIVE_TABS = [
   {
     title: 'The Journey',
     line: 'From the moment the news arrives to the moment they rest.',
-    img: '/john-life-6.jpg',
+    img: '/john-journey-border.jpg',
     href: '/memorials/john-peters?tab=journey',
   },
   {
     title: 'The Memorial',
     line: 'Story, gallery, voice, song, candles.',
-    img: '/john-life-2.jpg',
+    img: '/john-portrait.jpg',
     href: '/memorials/john-peters?tab=memorial',
   },
   {
