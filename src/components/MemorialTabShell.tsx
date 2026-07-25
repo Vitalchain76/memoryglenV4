@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { MEMORIAL_TAB_LABELS, MEMORIAL_TAB_ORDER } from '@/components/memorialTabs';
 import type { MemorialTab, MemorialTabId } from '@/components/memorialTabs';
 import { cn } from '@/lib/utils';
@@ -124,17 +124,20 @@ export default function MemorialTabShell({
       </div>
 
       <div ref={contentRef} className="scroll-mt-36">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={active}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-          >
-            {current?.content}
-          </motion.div>
-        </AnimatePresence>
+        {/* No AnimatePresence / mode="wait" here.
+            mode="wait" holds the incoming tab back until the outgoing tab's exit
+            animation completes; under React 19 that callback can be deferred, so
+            the new tab never mounts until some other render forces it. The tab
+            content must appear on the click itself, so the new panel mounts
+            immediately and simply fades in. */}
+        <motion.div
+          key={active}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+        >
+          {current?.content}
+        </motion.div>
       </div>
     </div>
   );
