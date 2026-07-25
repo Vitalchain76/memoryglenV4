@@ -15,8 +15,9 @@ export default function VoiceNotesTab() {
       </Reveal>
       <Reveal delay={0.1}>
         <AudioPlayer
+          src={VOICE_NOTE.src}
           title={VOICE_NOTE.title}
-          durationSeconds={42}
+          durationSeconds={VOICE_NOTE.durationSeconds}
           avatarInitial="V"
           className="mt-10 p-6"
         />

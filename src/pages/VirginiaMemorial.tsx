@@ -56,9 +56,11 @@ export default function VirginiaMemorial() {
       subnav: [
         { label: 'Overview', href: '#vg-overview' },
         { label: 'Life Story', href: '#vg-life-story' },
+        { label: 'Her Music', href: '#vg-songs' },
         { label: 'Gallery', href: '#vg-gallery' },
         { label: 'Videos', href: '#vg-videos' },
         { label: 'Her Voice', href: '#vg-voice' },
+        { label: 'For Nyasha', href: '#vg-her-video' },
         { label: 'Guestbook', href: '#vg-guestbook' },
         { label: 'Candles', href: '#vg-candles' },
       ],

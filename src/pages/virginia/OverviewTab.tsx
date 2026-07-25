@@ -172,6 +172,9 @@ export default function OverviewTab() {
             <p className="type-meta mt-5 text-soft">
               {HYMN.englishTitle} <span aria-hidden>·</span> {HYMN.attribution}
             </p>
+            <a href="#vg-songs" className="link-arrow mt-3 inline-flex text-sm">
+              Listen to this hymn
+            </a>
           </div>
         </div>
       </Reveal>
