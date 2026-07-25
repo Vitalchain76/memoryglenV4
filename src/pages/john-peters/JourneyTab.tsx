@@ -79,6 +79,7 @@ const STAGES: Stage[] = [
   {
     date: '4 Aug, 14:00',
     title: 'Documentation',
+    image: { src: '/john-journey-consulate.jpg', alt: 'The Zimbabwe Consulate, flag at half mast', caption: 'The consulate \u2014 papers begin' },
     body: 'The full cross-border document pack, coordinated and checked off one by one.',
     status: 'done',
     checklist: true,
@@ -88,20 +89,21 @@ const STAGES: Stage[] = [
     title: 'In Transit',
     body: 'Road journey commenced. N1 north from Johannesburg. The family gathered for a departure blessing.',
     status: 'done',
-    image: { src: '/john-life-5.jpg', alt: 'The N1 highway at dawn, heading north through the bushveld', caption: 'N1 north — the road home' },
+    image: { src: '/john-journey-home.jpg', alt: 'The hearse on the open road north, hills in the distance', caption: 'N1 north — the road home' },
   },
   {
     date: '6 Aug, 03:15',
     title: 'Border Cleared',
     body: 'Beitbridge border post. All permits validated in the quiet hours.',
     status: 'key',
-    image: { src: '/john-life-6.jpg', alt: 'The border-post gate at 3AM, one warm lamp under a starry sky', caption: 'Beitbridge, 03:15' },
+    image: { src: '/john-journey-border.jpg', alt: 'The border post between South Africa and Zimbabwe', caption: 'Beitbridge \u2014 the crossing' },
     notification: true,
     italicCaption: 'Sarah in London knew Dad had crossed the border before her morning tea. Nobody phoned anyone at 3AM.',
   },
   {
     date: '6 Aug, 08:30',
     title: 'Arrived Harare',
+    image: { src: '/john-journey-lying-in-state.jpg', alt: 'The casket at rest in a quiet room, draped', caption: 'Lying in state' },
     body: 'Received by David Peters at the family home, Glen Norah, Harare.',
     status: 'done',
   },
@@ -420,8 +422,8 @@ function Livestream() {
             className="group relative mt-8 block aspect-video w-full overflow-hidden rounded-sm"
           >
             <img
-              src="/john-life-2.jpg"
-              alt="Warm light spilling from the church doorway where the service was held"
+              src="/john-community.jpg"
+              alt="The congregation gathered for the service"
               className="h-full w-full object-cover"
               loading="lazy"
             />

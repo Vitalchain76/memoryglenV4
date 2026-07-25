@@ -18,6 +18,8 @@ interface TreeNode {
   kind: 'stone' | 'living';
   /** Slug of this person's memorial page, when one exists. Deceased only. */
   memorialSlug?: string;
+  /** Portrait photograph, shown in the person card. */
+  photo?: string;
   relation: string;
   glens: string[];
   legacyMember?: boolean;
@@ -37,10 +39,10 @@ const NODES: TreeNode[] = [
   { id: 'samuel', name: 'Samuel Peters', memorialSlug: 'samuel-peters', years: '1931–2001', x: 340, y: 70, kind: 'stone', relation: 'Father of John', glens: ['Peters Family Glen'] },
   { id: 'ruth', name: 'Ruth Peters', memorialSlug: 'ruth-peters', years: '1935–2011', x: 560, y: 70, kind: 'stone', relation: 'Mother of John', glens: ['Peters Family Glen'] },
   { id: 'james', name: 'James Peters', memorialSlug: 'james-peters', years: '1961–2019', x: 170, y: 230, kind: 'stone', relation: 'Brother of John', glens: ['Peters Family Glen'] },
-  { id: 'john', name: 'John Peters', memorialSlug: 'john-peters', years: '1958–2026', x: 400, y: 230, kind: 'stone', relation: 'The remembered', glens: ['Peters Family Glen'] },
-  { id: 'grace', name: 'Grace Peters', years: 'b. 1960', x: 580, y: 230, kind: 'living', relation: 'Wife of John', glens: ['Peters Family Glen'], legacyMember: true },
-  { id: 'david', name: 'David Peters', years: 'b. 1986', x: 250, y: 400, kind: 'living', relation: 'Son of John & Grace · Harare', glens: ['Peters Family Glen', 'Chiweshe Family Glen'], legacyMember: true },
-  { id: 'sarah', name: 'Sarah Miller', years: 'b. 1988', x: 500, y: 400, kind: 'living', relation: 'Daughter of John & Grace · London', glens: ['Peters Family Glen', 'Miller Family Glen'], legacyMember: true },
+  { id: 'john', name: 'John Peters', photo: '/john-portrait.jpg', memorialSlug: 'john-peters', years: '1958–2026', x: 400, y: 230, kind: 'stone', relation: 'The remembered', glens: ['Peters Family Glen'] },
+  { id: 'grace', name: 'Grace Peters', photo: '/john-wife.jpg', years: 'b. 1960', x: 580, y: 230, kind: 'living', relation: 'Wife of John', glens: ['Peters Family Glen'], legacyMember: true },
+  { id: 'david', name: 'David Peters', photo: '/john-son.jpg', years: 'b. 1986', x: 250, y: 400, kind: 'living', relation: 'Son of John & Grace · Harare', glens: ['Peters Family Glen', 'Chiweshe Family Glen'], legacyMember: true },
+  { id: 'sarah', name: 'Sarah Miller', photo: '/john-daughter.jpg', years: 'b. 1988', x: 500, y: 400, kind: 'living', relation: 'Daughter of John & Grace · London', glens: ['Peters Family Glen', 'Miller Family Glen'], legacyMember: true },
   { id: 'michael', name: 'Michael Peters', years: 'b. 1991', x: 720, y: 400, kind: 'living', relation: 'Son of John & Grace · Johannesburg', glens: ['Peters Family Glen'] },
   { id: 'thomas', name: 'Thomas Miller', years: 'b. 1987', x: 660, y: 520, kind: 'living', relation: 'Husband of Sarah', glens: ['Miller Family Glen'] },
   { id: 'emma', name: 'Emma Miller', years: 'b. 2017', x: 560, y: 620, kind: 'living', relation: 'Daughter of Sarah & Thomas', glens: ['Miller Family Glen', 'Peters Family Glen'], small: true },
@@ -336,6 +338,14 @@ function NodeCard({ node, onClose }: { node: TreeNode; onClose: () => void }) {
           {node.name} {node.years && <span className="text-sm text-soft">· {node.years}</span>}
         </p>
         <p className="type-meta mt-1 text-soft">{node.relation}</p>
+        {node.photo && (
+          <img
+            src={node.photo}
+            alt={node.name}
+            loading="lazy"
+            className="mt-4 aspect-[4/5] w-full max-w-[180px] rounded-sm object-cover"
+          />
+        )}
         <p className="mt-2 text-sm text-soft">
           {node.glens.length > 1
             ? `${node.name.split(' ')[0]} belongs to ${node.glens.length} family glens: ${node.glens.join(' · ')}`
