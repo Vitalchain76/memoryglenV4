@@ -88,6 +88,16 @@ export interface Memorial {
   features: string[];
   candles: number;
   communityMemorial: boolean;
+  /**
+   * A real person whose memorial the family has not yet written. The page
+   * renders name, dates and relation only — never empty section shells, and
+   * never invented content. Remove this flag when real content arrives.
+   */
+  awaitingContent?: boolean;
+  /** How this person relates to the family, in the family's own words. */
+  familyRelation?: string;
+  /** One line for the Family Glen listing. */
+  glenNote?: string;
   /** Hidden from the public /memorials directory; still fully reachable by slug.
       Used for the Peters family, who belong to the John Peters demo rather than
       the general public listing. */
@@ -125,6 +135,14 @@ const BY_SLUG = new Map(MEMORIALS.map((m) => [m.slug, m]));
 
 /** Memorials shown in the public /memorials directory grid. */
 export const LISTED_MEMORIALS = MEMORIALS.filter((m) => !m.unlisted);
+
+/** The Chiimba family glen — those who rest with Virginia, oldest first. */
+export const CHIIMBA_GLEN_SLUGS = ['chari-chiimba', 'moses-sarire-ivhu-chiimba'] as const;
+
+export const CHIIMBA_GLEN = CHIIMBA_GLEN_SLUGS
+  .map((slug) => BY_SLUG.get(slug))
+  .filter((m): m is Memorial => Boolean(m))
+  .sort((a, b) => a.deathYear - b.deathYear);
 
 export function isTemplateSlug(slug: string): boolean {
   return (TEMPLATE_SLUGS as readonly string[]).includes(slug);

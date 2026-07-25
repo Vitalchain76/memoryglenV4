@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { MapPin } from 'lucide-react';
+import { ArrowRight, MapPin } from 'lucide-react';
+import { Link } from 'react-router';
 import Reveal from '@/components/Reveal';
 import QRShareBlock from '@/components/QRShareBlock';
 import Lightbox from '@/pages/virginia/Lightbox';
 import { MEMORIAL_URL, RESTING_PLACE, SIBLINGS } from '@/pages/virginia/data';
+import { CHIIMBA_GLEN } from '@/data/memorials';
 
 /**
  * TAB 3 — Family Glen.
@@ -32,6 +34,54 @@ export default function GlenTab() {
             for sitting with her, not only for visiting.
           </p>
         </Reveal>
+      </section>
+
+      {/* The Chiimba family glen — Chari, Moses, then Virginia, oldest first.
+          Relationship terms are the family's own (Grandfather, Uncle); the
+          relation to Virginia is given beneath, since Chiimba is her married
+          name and these are her husband's people. */}
+      <section aria-labelledby="glen-list">
+        <Reveal>
+          <h3 id="glen-list" className="type-h3 text-body">
+            The Chiimba Family Glen
+          </h3>
+          <p className="type-meta mt-2 max-w-reading text-soft">
+            Family terms are as her children use them. Her own relation is given beneath.
+          </p>
+        </Reveal>
+        <ul className="mt-6 space-y-3">
+          {CHIIMBA_GLEN.map((m, i) => (
+            <Reveal as="li" key={m.slug} delay={Math.min(i, 3) * 0.06}>
+              <Link
+                to={`/memorials/${m.slug}`}
+                className="card-raised group flex items-center gap-4 p-5 transition-transform duration-200 hover:-translate-y-0.5"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-lg text-body">{m.name}</span>
+                  <span className="type-meta mt-0.5 block text-soft">
+                    {m.familyRelation}
+                    {m.familyRelation === 'Grandfather' && ' \u00b7 her father-in-law'}
+                    {m.familyRelation === 'Uncle' && ' \u00b7 her brother-in-law'}
+                    {' \u00b7 '}
+                    {m.years}
+                  </span>
+                </span>
+                <span className="link-arrow flex-none text-sm">
+                  Visit <ArrowRight size={14} aria-hidden />
+                </span>
+              </Link>
+            </Reveal>
+          ))}
+          <Reveal as="li" delay={0.18}>
+            <div className="card-raised border border-brass/40 p-5">
+              <p className="font-display text-lg text-body">
+                Virginia Dadirayi Chiimba
+                <span className="type-meta ml-2 text-brass">\u00b7 this memorial</span>
+              </p>
+              <p className="type-meta mt-0.5 text-soft">1955 \u2013 2025 \u00b7 Seke, Zinganga</p>
+            </div>
+          </Reveal>
+        </ul>
       </section>
 
       <section aria-labelledby="glen-resting">

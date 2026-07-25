@@ -575,3 +575,115 @@ export function isAnniversaryToday(): boolean {
   const now = new Date();
   return now.getMonth() === 4 && now.getDate() === 19;
 }
+
+
+/* ---------- The Journey — from the family's own record ---------- */
+
+/**
+ * The final journey, May–October 2025, taken from the family WhatsApp
+ * coordinating group.
+ *
+ * RULES FOR THIS SECTION — do not relax them:
+ *  - Every line here comes from the family's record. Nothing is inferred.
+ *  - No emotional colour has been added. The events carry their own weight.
+ *  - Names are the family's real names. WhatsApp handles (South Ray, Giri,
+ *    Para bellum) are deliberately not published.
+ *  - The photograph album link is NOT published. The gallery holds many living
+ *    relatives at a private gathering, and a public page would make it findable
+ *    by anyone. The album is noted as existing; the link stays with the family.
+ *  - There is a gap between 19 May and early October 2025 that the record does
+ *    not cover. It is left as a gap, not filled.
+ */
+
+export interface JourneyPerson {
+  name: string;
+  role: string;
+}
+
+export const COORDINATING_TEAM: JourneyPerson[] = [
+  { name: 'Rev Chinyowa', role: 'Methodist Revival Church (MRC)' },
+  { name: 'Sekuru Robson', role: 'Master of Ceremonies' },
+  { name: 'Sekuru Joachim Mushore', role: 'Her brother' },
+  { name: 'Raymond', role: 'Her son' },
+  { name: 'Gilbert', role: 'Her son' },
+  { name: 'Douglas', role: 'Her son' },
+  { name: 'Hamu', role: 'Her son' },
+];
+
+/** Order of service, 25 October 2025. */
+export const UNVEILING_PROGRAMME: { time?: string; item: string; who?: string }[] = [
+  { time: '10:00 \u2013 10:30', item: 'Opening prayer', who: 'Rev Chinyowa' },
+  { item: 'Introduction', who: 'Family representative' },
+  { item: 'Testimonies', who: 'Parents and siblings, children, grandchildren, friends' },
+  { item: 'Biography reading' },
+  { item: 'Church service', who: 'Sermon, approximately 30 minutes' },
+  { item: 'Relocation to the graveside' },
+  { item: 'Unveiling of the tombstone', who: 'Rev Chinyowa' },
+  { item: 'Vote of thanks' },
+  { item: 'Lunch' },
+];
+
+export interface JourneyStage {
+  id: string;
+  stage: number;
+  label: string;
+  date: string;
+  body: string[];
+}
+
+export const JOURNEY_STAGES: JourneyStage[] = [
+  {
+    id: 'passing',
+    stage: 1,
+    label: 'Her Passing',
+    date: '19 May 2025',
+    body: ['Virginia Dadirayi Chiimba passed away.'],
+  },
+  {
+    id: 'coordination',
+    stage: 2,
+    label: 'Family Coordination and Planning',
+    date: 'Early October 2025',
+    body: [
+      'The family formed the Virginia Chiimba Memorial Coordinating Team to plan her memorial service and the unveiling of her tombstone.',
+      'The service would be held at Mushore Homestead in Seke \u2014 her own family\u2019s homestead, and the home of her brother, Sekuru Joachim Mushore.',
+    ],
+  },
+  {
+    id: 'tombstone',
+    stage: 3,
+    label: 'Tombstone Preparation',
+    date: '14 \u2013 24 October 2025',
+    body: [
+      'The tombstone \u2014 the dombo \u2014 was completed on 14 and 15 October and prepared for the unveiling. It remained covered until the ceremony.',
+      'From 18 to 24 October the family worked through the detail of the programme: the speakers, the order of service, and the timing of the day.',
+    ],
+  },
+  {
+    id: 'unveiling',
+    stage: 4,
+    label: 'Memorial Service and Tombstone Unveiling',
+    date: 'Saturday 25 October 2025',
+    body: ['Mushore Homestead, Seke, Chitungwiza.'],
+  },
+  {
+    id: 'after',
+    stage: 5,
+    label: 'After the Service',
+    date: '26 \u2013 30 October 2025',
+    body: [
+      'On 26 October the family gave thanks for a service well held.',
+      'On 30 October a professional photograph album of the memorial service was shared within the family.',
+    ],
+  },
+  {
+    id: 'remembrance',
+    stage: 6,
+    label: 'Ongoing Remembrance',
+    date: 'Every year',
+    body: [
+      'Her family gathers to remember her on the anniversary of her passing, 19 May, and on her birthday, 7 June.',
+      'On 19 May each year this memorial keeps Dusk.',
+    ],
+  },
+];
