@@ -363,8 +363,8 @@ export default function Memorials() {
             <div className="grid gap-6 lg:grid-cols-2">
               <FeaturedCard
                 href="/memorials/virginia-dadirayi-chiimba"
-                img="/virginia-portrait.jpg"
-                imgAlt="Portrait placeholder of Virginia Dadirayi Chiimba"
+                img="/virginia-portrait-blue-headscarf.jpg"
+                imgAlt="Virginia Dadirayi Chiimba, smiling, in a bright blue headscarf"
                 name="Virginia Dadirayi Chiimba"
                 years="1955–2025"
                 line="A loving, caring, strong, and deeply faithful mother. The heart of our family."

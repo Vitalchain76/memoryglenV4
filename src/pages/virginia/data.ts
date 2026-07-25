@@ -347,19 +347,73 @@ export interface FamilyMember {
 }
 
 /**
- * Her parents and her nine siblings. She was the firstborn of ten and none of
- * them are yet named on her memorial.
+ * The Mushore family — her parents and her nine siblings, supplied by the
+ * family 25 July 2026.
  *
- * PENDING: Gilbert will supply the real names. Do not invent, infer or guess
- * any name here — leave the arrays empty until the family provides them. The
- * page holds the place rather than filling it.
+ * Birth years appear ONLY where the family gave them. Josephine's year and
+ * both parents' years are unknown and are deliberately left blank rather than
+ * estimated. Do not fill these in by inference.
  */
-export const PARENTS: FamilyMember[] = [];
-export const SIBLINGS: FamilyMember[] = [];
-export const SIBLING_COUNT = 9;
+export interface Parent extends FamilyMember {
+  /** Shona honorific used by her children and grandchildren. */
+  honorific: string;
+  /** Both are living. Never render them as deceased. */
+  living: true;
+}
+
+/**
+ * Her parents — Johannes and Juliana Mushore. BOTH ARE LIVING (confirmed by
+ * the family, 25 July 2026). Nothing on this page may imply otherwise: no
+ * death years, no memorial links, no past tense.
+ *
+ * `honorific` is how Virginia's children and grandchildren address them.
+ * `relation` is their relation to Virginia herself, whose memorial this is.
+ *
+ * Their 72nd wedding anniversary was supplied and then withdrawn from
+ * publication at the family's request. Do not reinstate it, and do not publish
+ * any venue, time or address for living family members.
+ */
+export const PARENTS: Parent[] = [
+  { name: 'Johannes Mushore', relation: 'Her father', honorific: 'Sekuru Johannes', living: true },
+  { name: 'Juliana Mushore', relation: 'Her mother', honorific: 'Ambuya Juliana', living: true },
+];
+
+/**
+ * Shona kinship terms, as the family uses them (confirmed by Gilbert).
+ * Virginia was the firstborn, so every sister is younger than her — which is
+ * why all her sisters take the same term.
+ */
+export const KINSHIP_NOTE =
+  'In our family, Virginia\u2019s brothers are Sekuru to her children and grandchildren, and her sisters are Amaini.';
+
+export interface Sibling extends FamilyMember {
+  /** Birth order among the ten children, Virginia first. */
+  order: number;
+  deathYear?: number;
+  isVirginia?: boolean;
+  /** Shona kinship term used by Virginia's children — Sekuru or Amaini. */
+  kinship?: string;
+}
+
+/** All ten children of Johannes and Juliana, in birth order. */
+export const SIBLINGS: Sibling[] = [
+  { order: 1, name: 'Virginia Dadirayi Chiimba', relation: 'Firstborn', birthYear: 1955, deathYear: 2025, isVirginia: true },
+  { order: 2, name: 'George Mushore', relation: 'Her brother', kinship: 'Sekuru', birthYear: 1956 },
+  { order: 3, name: 'Getrude Mushore', relation: 'Her sister', kinship: 'Amaini', birthYear: 1959 },
+  { order: 4, name: 'Gerald Mushore', relation: 'Her brother', kinship: 'Sekuru', birthYear: 1960 },
+  { order: 5, name: 'Joachim Mushore', relation: 'Her brother', kinship: 'Sekuru', birthYear: 1964 },
+  { order: 6, name: 'Joseph Mushore', relation: 'Her brother', kinship: 'Sekuru', birthYear: 1968, deathYear: 2024 },
+  // Birth year not supplied by the family — left blank deliberately.
+  { order: 7, name: 'Josephine Mushore', relation: 'Her sister', kinship: 'Amaini' },
+  { order: 8, name: 'Victoria Mushore', relation: 'Her sister', kinship: 'Amaini', birthYear: 1975, deathYear: 2016 },
+  { order: 9, name: 'Concilica Mushore', relation: 'Her sister', kinship: 'Amaini', birthYear: 1978 },
+  { order: 10, name: 'Tafadzwa Mushore', relation: 'Her brother', kinship: 'Sekuru', birthYear: 1980 },
+];
+
+export const SIBLING_COUNT = SIBLINGS.length - 1;
 
 export const ORIGIN_FAMILY_COPY =
-  'Virginia was the firstborn of ten. Her parents and her nine brothers and sisters belong on this page, and a place is kept for them here until their names are added.';
+  'Virginia was the firstborn of ten, born to Johannes and Juliana Mushore. Her brothers and sisters are named here in birth order.';
 
 /**
  * Her schooling, working life and early years.
