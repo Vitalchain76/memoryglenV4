@@ -105,7 +105,21 @@ export default function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-bone/10">
         <div className="container-content flex flex-col items-start justify-between gap-4 py-6 sm:flex-row sm:items-center">
-          <p className="text-sm text-sage">© 2026 MemoryGlen. All rights reserved.</p>
+          <div>
+            <p className="text-sm text-sage">© 2026 MemoryGlen. All rights reserved.</p>
+            {/* Founding credit — Virginia Dadirayi Chiimba is a real person and the
+                memorial this platform was built for. Quiet, permanent, never demo-labelled. */}
+            <p className="mt-1.5 text-sm text-sage">
+              Inspired by{' '}
+              <Link
+                to="/memorials/virginia-dadirayi-chiimba"
+                className="text-brass-soft underline-offset-4 transition-colors hover:text-brass hover:underline"
+              >
+                Virginia Dadirayi Chiimba
+              </Link>{' '}
+              — Founding Memorial
+            </p>
+          </div>
 
           <div className="flex flex-wrap items-center gap-6">
             {/* Dusk / Parchment mode toggle */}

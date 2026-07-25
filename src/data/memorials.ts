@@ -88,6 +88,10 @@ export interface Memorial {
   features: string[];
   candles: number;
   communityMemorial: boolean;
+  /** Hidden from the public /memorials directory; still fully reachable by slug.
+      Used for the Peters family, who belong to the John Peters demo rather than
+      the general public listing. */
+  unlisted?: boolean;
   biographyTitle: string;
   biography: string[];
   tributesTitle: string;
@@ -118,6 +122,9 @@ export const MEMORIALS: Memorial[] = (raw as RawMemorial[]).map((m) => ({
 }));
 
 const BY_SLUG = new Map(MEMORIALS.map((m) => [m.slug, m]));
+
+/** Memorials shown in the public /memorials directory grid. */
+export const LISTED_MEMORIALS = MEMORIALS.filter((m) => !m.unlisted);
 
 export function isTemplateSlug(slug: string): boolean {
   return (TEMPLATE_SLUGS as readonly string[]).includes(slug);

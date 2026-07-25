@@ -7,7 +7,7 @@ import Reveal from '@/components/Reveal';
 import PrivacyBadge from '@/components/PrivacyBadge';
 import ServiceProviderRail from '@/components/ServiceProviderRail';
 import type { ServiceProvider } from '@/components/ServiceProviderRail';
-import { MEMORIALS } from '@/data/memorials';
+import { LISTED_MEMORIALS } from '@/data/memorials';
 import { getAssets } from '@/data/memorialAssets';
 import { cn } from '@/lib/utils';
 
@@ -63,7 +63,7 @@ const COUNTRY_BY_PLACE: Record<string, Country> = {
  * facts (years, place, features, candle counts) can never drift from the
  * memorial pages themselves. `memorials.json` is the single source of truth.
  */
-const SEED_MEMORIALS: SeedMemorial[] = MEMORIALS.map((m) => ({
+const SEED_MEMORIALS: SeedMemorial[] = LISTED_MEMORIALS.map((m) => ({
   slug: m.slug,
   name: m.name,
   born: m.birthYear,
