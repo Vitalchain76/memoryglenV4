@@ -257,21 +257,36 @@ export interface GalleryItem {
   category: 'Family' | 'Church' | 'Seke';
 }
 
-/** 13 media placeholders — the family replaces these with real photographs. */
+/**
+ * Her real photographs, supplied by the family. The thirteen stock placeholders
+ * that stood here before have been removed entirely.
+ *
+ * Captions describe only what is visible. Nothing is asserted about occasion,
+ * date or place beyond what the family has confirmed — a photograph of a
+ * birthday is captioned as a birthday, not as a particular birthday. The family
+ * will replace these with their own captions.
+ */
 export const GALLERY: GalleryItem[] = [
-  { src: '/virginia-gallery-1.jpg', caption: 'Sunday lunch at home — sadza, relish, and everyone together', category: 'Family' },
-  { src: '/virginia-gallery-2.jpg', caption: 'Her well-worn Bible, read every morning', category: 'Church' },
-  { src: '/virginia-gallery-3.jpg', caption: 'The homestead at dusk, Seke', category: 'Seke' },
-  { src: '/virginia-gallery-4.jpg', caption: 'Hymn book and choir robes — she loved to sing', category: 'Church' },
-  { src: '/virginia-gallery-1.jpg', caption: 'A family gathering, everyone at the table', category: 'Family' },
-  { src: '/virginia-gallery-3.jpg', caption: 'Quiet evening in Zinganga', category: 'Seke' },
-  { src: '/virginia-gallery-4.jpg', caption: 'Sunday service with the choir', category: 'Church' },
-  { src: '/virginia-gallery-2.jpg', caption: 'Morning devotion and prayer', category: 'Church' },
-  { src: '/virginia-gallery-1.jpg', caption: 'Celebrating together, as she taught us', category: 'Family' },
-  { src: '/virginia-gallery-3.jpg', caption: 'The Seke hills she called home', category: 'Seke' },
-  { src: '/virginia-gallery-1.jpg', caption: 'Grandchildren visiting Gogo', category: 'Family' },
-  { src: '/virginia-gallery-2.jpg', caption: 'Her favourite verses, marked and treasured', category: 'Church' },
-  { src: '/virginia-gallery-3.jpg', caption: 'Smoke from the kitchen fire, home at last', category: 'Seke' },
+  { src: '/virginia-portrait-primary.jpg', caption: 'The photograph her family chose for the memorial booklet', category: 'Family' },
+  { src: '/virginia-portrait-thoughtful.jpg', caption: 'A quiet moment', category: 'Family' },
+  { src: '/virginia-portrait-white-blazer.jpg', caption: 'Dressed for the day', category: 'Family' },
+  { src: '/virginia-young-studio-portrait.jpg', caption: 'A studio portrait from her younger years', category: 'Family' },
+  { src: '/virginia-laughing-with-family.jpg', caption: 'Laughing, held on both sides', category: 'Family' },
+  { src: '/virginia-laughing-on-the-couch.jpg', caption: 'An evening at home', category: 'Family' },
+  { src: '/virginia-selfie-with-grandchildren.jpg', caption: 'With two of her grandchildren', category: 'Family' },
+  { src: '/virginia-birthday-celebration.jpg', caption: 'A birthday, surrounded by family', category: 'Family' },
+  { src: '/virginia-with-grandsons.jpg', caption: 'With her grandsons', category: 'Family' },
+  { src: '/virginia-with-grandchildren.jpg', caption: 'Sitting with her grandchildren', category: 'Family' },
+  { src: '/virginia-her-children.jpg', caption: 'Her children together', category: 'Family' },
+  { src: '/virginia-family-four.jpg', caption: 'Family, gathered outdoors', category: 'Family' },
+  { src: '/virginia-with-son-indoors.jpg', caption: 'With one of her sons', category: 'Family' },
+  { src: '/virginia-with-son-outdoors.jpg', caption: 'With one of her sons', category: 'Family' },
+  { src: '/virginia-family-dinner.jpg', caption: 'Around the table', category: 'Family' },
+  { src: '/virginia-family-outing.jpg', caption: 'A family outing', category: 'Family' },
+  { src: '/virginia-speaking-lectern.jpg', caption: 'Reading at a service', category: 'Church' },
+  { src: '/virginia-resting-place-pergola.jpg', caption: 'Her resting place at Seke, at sunset', category: 'Seke' },
+  { src: '/virginia-headstone.jpg', caption: 'Her stone \u2014 7 June 1955 to 19 May 2025', category: 'Seke' },
+  { src: '/virginia-parents-at-her-graveside.jpg', caption: 'Sekuru Johannes and Ambuya Juliana at their daughter\u2019s graveside', category: 'Seke' },
 ];
 
 export const GALLERY_CAPTION =
@@ -296,7 +311,7 @@ export const BOOKLETS_COPY =
 export const RESTING_PLACE = {
   title: 'Seke, Zinganga, Zimbabwe',
   copy: 'Virginia Dadirayi Chiimba was laid to rest in Seke, Zinganga, the community she called home. Her grave stands as a quiet place of remembrance where family and friends can visit, reflect, and feel close to her enduring spirit.',
-  photos: ['/virginia-grave-1.jpg', '/virginia-grave-2.jpg'],
+  photos: ['/virginia-resting-place-pergola.jpg', '/virginia-headstone.jpg'],
   caption: 'Photos from Seke, Zinganga — May her soul rest in eternal peace.',
 };
 
@@ -347,19 +362,73 @@ export interface FamilyMember {
 }
 
 /**
- * Her parents and her nine siblings. She was the firstborn of ten and none of
- * them are yet named on her memorial.
+ * The Mushore family — her parents and her nine siblings, supplied by the
+ * family 25 July 2026.
  *
- * PENDING: Gilbert will supply the real names. Do not invent, infer or guess
- * any name here — leave the arrays empty until the family provides them. The
- * page holds the place rather than filling it.
+ * Birth years appear ONLY where the family gave them. Josephine's year and
+ * both parents' years are unknown and are deliberately left blank rather than
+ * estimated. Do not fill these in by inference.
  */
-export const PARENTS: FamilyMember[] = [];
-export const SIBLINGS: FamilyMember[] = [];
-export const SIBLING_COUNT = 9;
+export interface Parent extends FamilyMember {
+  /** Shona honorific used by her children and grandchildren. */
+  honorific: string;
+  /** Both are living. Never render them as deceased. */
+  living: true;
+}
+
+/**
+ * Her parents — Johannes and Juliana Mushore. BOTH ARE LIVING (confirmed by
+ * the family, 25 July 2026). Nothing on this page may imply otherwise: no
+ * death years, no memorial links, no past tense.
+ *
+ * `honorific` is how Virginia's children and grandchildren address them.
+ * `relation` is their relation to Virginia herself, whose memorial this is.
+ *
+ * Their 72nd wedding anniversary was supplied and then withdrawn from
+ * publication at the family's request. Do not reinstate it, and do not publish
+ * any venue, time or address for living family members.
+ */
+export const PARENTS: Parent[] = [
+  { name: 'Johannes Mushore', relation: 'Her father', honorific: 'Sekuru Johannes', living: true },
+  { name: 'Juliana Mushore', relation: 'Her mother', honorific: 'Ambuya Juliana', living: true },
+];
+
+/**
+ * Shona kinship terms, as the family uses them (confirmed by Gilbert).
+ * Virginia was the firstborn, so every sister is younger than her — which is
+ * why all her sisters take the same term.
+ */
+export const KINSHIP_NOTE =
+  'In our family, Virginia\u2019s brothers are Sekuru to her children and grandchildren, and her sisters are Amaini.';
+
+export interface Sibling extends FamilyMember {
+  /** Birth order among the ten children, Virginia first. */
+  order: number;
+  deathYear?: number;
+  isVirginia?: boolean;
+  /** Shona kinship term used by Virginia's children — Sekuru or Amaini. */
+  kinship?: string;
+}
+
+/** All ten children of Johannes and Juliana, in birth order. */
+export const SIBLINGS: Sibling[] = [
+  { order: 1, name: 'Virginia Dadirayi Chiimba', relation: 'Firstborn', birthYear: 1955, deathYear: 2025, isVirginia: true },
+  { order: 2, name: 'George Mushore', relation: 'Her brother', kinship: 'Sekuru', birthYear: 1956 },
+  { order: 3, name: 'Getrude Mushore', relation: 'Her sister', kinship: 'Amaini', birthYear: 1959 },
+  { order: 4, name: 'Gerald Mushore', relation: 'Her brother', kinship: 'Sekuru', birthYear: 1960 },
+  { order: 5, name: 'Joachim Mushore', relation: 'Her brother', kinship: 'Sekuru', birthYear: 1964 },
+  { order: 6, name: 'Joseph Mushore', relation: 'Her brother', kinship: 'Sekuru', birthYear: 1968, deathYear: 2024 },
+  // Birth year not supplied by the family — left blank deliberately.
+  { order: 7, name: 'Josephine Mushore', relation: 'Her sister', kinship: 'Amaini' },
+  { order: 8, name: 'Victoria Mushore', relation: 'Her sister', kinship: 'Amaini', birthYear: 1975, deathYear: 2016 },
+  { order: 9, name: 'Concilica Mushore', relation: 'Her sister', kinship: 'Amaini', birthYear: 1978 },
+  { order: 10, name: 'Tafadzwa Mushore', relation: 'Her brother', kinship: 'Sekuru', birthYear: 1980 },
+];
+
+export const SIBLING_COUNT = SIBLINGS.length - 1;
 
 export const ORIGIN_FAMILY_COPY =
-  'Virginia was the firstborn of ten. Her parents and her nine brothers and sisters belong on this page, and a place is kept for them here until their names are added.';
+  'Virginia was the firstborn of ten, born to Johannes and Juliana Mushore. Her brothers and sisters are named here in birth order.';
 
 /**
  * Her schooling, working life and early years.
@@ -414,9 +483,9 @@ export interface ServiceVideo {
 }
 
 export const SERVICE_VIDEOS: ServiceVideo[] = [
-  { title: 'Funeral Service — Part 1', thumbnail: '/virginia-gallery-4.jpg' },
-  { title: 'Funeral Service — Part 2', thumbnail: '/virginia-gallery-3.jpg' },
-  { title: 'Funeral Service — Part 3', thumbnail: '/virginia-gallery-2.jpg' },
+  { title: 'Funeral Service — Part 1', thumbnail: '/virginia-resting-place-pergola.jpg' },
+  { title: 'Funeral Service — Part 2', thumbnail: '/virginia-headstone.jpg' },
+  { title: 'Funeral Service — Part 3', thumbnail: '/virginia-family-outing.jpg' },
 ];
 
 export const VIDEOS_META = 'Recorded 25 October 2025 · Mushore Homestead, Seke';
@@ -521,3 +590,115 @@ export function isAnniversaryToday(): boolean {
   const now = new Date();
   return now.getMonth() === 4 && now.getDate() === 19;
 }
+
+
+/* ---------- The Journey — from the family's own record ---------- */
+
+/**
+ * The final journey, May–October 2025, taken from the family WhatsApp
+ * coordinating group.
+ *
+ * RULES FOR THIS SECTION — do not relax them:
+ *  - Every line here comes from the family's record. Nothing is inferred.
+ *  - No emotional colour has been added. The events carry their own weight.
+ *  - Names are the family's real names. WhatsApp handles (South Ray, Giri,
+ *    Para bellum) are deliberately not published.
+ *  - The photograph album link is NOT published. The gallery holds many living
+ *    relatives at a private gathering, and a public page would make it findable
+ *    by anyone. The album is noted as existing; the link stays with the family.
+ *  - There is a gap between 19 May and early October 2025 that the record does
+ *    not cover. It is left as a gap, not filled.
+ */
+
+export interface JourneyPerson {
+  name: string;
+  role: string;
+}
+
+export const COORDINATING_TEAM: JourneyPerson[] = [
+  { name: 'Rev Chinyowa', role: 'Methodist Revival Church (MRC)' },
+  { name: 'Sekuru Robson', role: 'Master of Ceremonies' },
+  { name: 'Sekuru Joachim Mushore', role: 'Her brother' },
+  { name: 'Raymond', role: 'Her son' },
+  { name: 'Gilbert', role: 'Her son' },
+  { name: 'Douglas', role: 'Her son' },
+  { name: 'Hamu', role: 'Her son' },
+];
+
+/** Order of service, 25 October 2025. */
+export const UNVEILING_PROGRAMME: { time?: string; item: string; who?: string }[] = [
+  { time: '10:00 \u2013 10:30', item: 'Opening prayer', who: 'Rev Chinyowa' },
+  { item: 'Introduction', who: 'Family representative' },
+  { item: 'Testimonies', who: 'Parents and siblings, children, grandchildren, friends' },
+  { item: 'Biography reading' },
+  { item: 'Church service', who: 'Sermon, approximately 30 minutes' },
+  { item: 'Relocation to the graveside' },
+  { item: 'Unveiling of the tombstone', who: 'Rev Chinyowa' },
+  { item: 'Vote of thanks' },
+  { item: 'Lunch' },
+];
+
+export interface JourneyStage {
+  id: string;
+  stage: number;
+  label: string;
+  date: string;
+  body: string[];
+}
+
+export const JOURNEY_STAGES: JourneyStage[] = [
+  {
+    id: 'passing',
+    stage: 1,
+    label: 'Her Passing',
+    date: '19 May 2025',
+    body: ['Virginia Dadirayi Chiimba passed away.'],
+  },
+  {
+    id: 'coordination',
+    stage: 2,
+    label: 'Family Coordination and Planning',
+    date: 'Early October 2025',
+    body: [
+      'The family formed the Virginia Chiimba Memorial Coordinating Team to plan her memorial service and the unveiling of her tombstone.',
+      'The service would be held at Mushore Homestead in Seke \u2014 her own family\u2019s homestead, and the home of her brother, Sekuru Joachim Mushore.',
+    ],
+  },
+  {
+    id: 'tombstone',
+    stage: 3,
+    label: 'Tombstone Preparation',
+    date: '14 \u2013 24 October 2025',
+    body: [
+      'The tombstone \u2014 the dombo \u2014 was completed on 14 and 15 October and prepared for the unveiling. It remained covered until the ceremony.',
+      'From 18 to 24 October the family worked through the detail of the programme: the speakers, the order of service, and the timing of the day.',
+    ],
+  },
+  {
+    id: 'unveiling',
+    stage: 4,
+    label: 'Memorial Service and Tombstone Unveiling',
+    date: 'Saturday 25 October 2025',
+    body: ['Mushore Homestead, Seke, Chitungwiza.'],
+  },
+  {
+    id: 'after',
+    stage: 5,
+    label: 'After the Service',
+    date: '26 \u2013 30 October 2025',
+    body: [
+      'On 26 October the family gave thanks for a service well held.',
+      'On 30 October a professional photograph album of the memorial service was shared within the family.',
+    ],
+  },
+  {
+    id: 'remembrance',
+    stage: 6,
+    label: 'Ongoing Remembrance',
+    date: 'Every year',
+    body: [
+      'Her family gathers to remember her on the anniversary of her passing, 19 May, and on her birthday, 7 June.',
+      'On 19 May each year this memorial keeps Dusk.',
+    ],
+  },
+];

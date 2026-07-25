@@ -62,8 +62,8 @@ export default function Hero({
         >
           <div className="inline-block rounded-sm bg-parchment p-3 pb-4">
             <img
-              src="/virginia-portrait.jpg"
-              alt="Portrait of Virginia Dadirayi Chiimba"
+              src="/virginia-portrait-blue-headscarf.jpg"
+              alt="Virginia Dadirayi Chiimba, smiling, in a bright blue headscarf and embroidered blue top"
               width={200}
               height={250}
               className="rounded-sm object-cover"

@@ -89,7 +89,7 @@ export default function LifeStoryTab() {
         <Reveal>
           <figure className="my-10">
             <img
-              src="/virginia-gallery-2.jpg"
+              src="/virginia-young-studio-portrait.jpg"
               alt="Her well-worn Bible with reading glasses, in morning light"
               loading="lazy"
               className="w-full rounded-sm object-cover"

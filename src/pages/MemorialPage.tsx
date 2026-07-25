@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronLeft, ChevronRight, Download, FileText, Globe, MapPin, Video, X } from 'lucide-react';
+import { ArrowRight, Check, ChevronLeft, ChevronRight, Download, FileText, Globe, MapPin, Video, X } from 'lucide-react';
 import DemoBanner from '@/components/DemoBanner';
 import AudioPlayer from '@/components/AudioPlayer';
 import PlaylistCard from '@/components/PlaylistCard';
@@ -346,8 +346,72 @@ export default function MemorialPage() {
   // Unknown slug (and never the two template slugs) → the public directory.
   if (!memorial) return <Navigate to="/memorials" replace />;
 
+  // A real person whose page the family has not yet written.
+  if (memorial.awaitingContent) {
+    return <AwaitingContent key={memorial.slug} memorial={memorial} />;
+  }
+
   // Keyed by slug so all page state resets cleanly when navigating between memorials.
   return <MemorialBody key={memorial.slug} memorial={memorial} />;
+}
+
+/**
+ * A real person whose memorial the family has not yet written. Rather than
+ * render a page of empty sections, we show what is known and say plainly that
+ * the rest is coming. No placeholder prose, no invented content.
+ */
+function AwaitingContent({ memorial }: { memorial: Memorial }) {
+  return (
+    <div>
+      <section className="bg-forest pb-16 pt-12 text-center text-bone md:pb-20 md:pt-16">
+        <div className="container-content flex flex-col items-center">
+          <h1 className="type-display text-bone">{memorial.name}</h1>
+          <p className="type-meta mt-4 font-medium tracking-[0.2em] text-brass">{memorial.years}</p>
+          {memorial.familyRelation && (
+            <p className="type-meta mt-3 text-sage">{memorial.familyRelation}</p>
+          )}
+        </div>
+      </section>
+
+      <div className="container-content py-16 md:py-24">
+        <div className="mx-auto max-w-reading space-y-10">
+          {memorial.restingPlace.name && (
+            <Reveal>
+              <p className="eyebrow">Resting Place</p>
+              <p className="type-h3 mt-3 flex items-center gap-2 text-body">
+                <MapPin size={20} className="text-brass" aria-hidden /> {memorial.restingPlace.name}
+              </p>
+            </Reveal>
+          )}
+
+          <Reveal delay={0.08}>
+            <div className="rounded-sm border border-dashed border-brass/60 p-6 sm:p-8">
+              <p className="type-story text-body">
+                This memorial is being written by the family.
+              </p>
+              <p className="mt-3 leading-relaxed text-soft">
+                {memorial.name}’s life story, photographs and tributes will be added here.
+              </p>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.14}>
+            <QRShareBlock
+              qrSrc={`/qr-${memorial.slug}.svg`}
+              url={memorialUrl(memorial)}
+              title={`Share ${memorial.name}’s memorial`}
+            />
+          </Reveal>
+
+          <Reveal delay={0.2}>
+            <Link to="/memorials/virginia-dadirayi-chiimba?tab=glen" className="link-arrow text-sm">
+              Return to the Family Glen <ArrowRight size={14} aria-hidden />
+            </Link>
+          </Reveal>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function MemorialBody({ memorial }: { memorial: Memorial }) {
