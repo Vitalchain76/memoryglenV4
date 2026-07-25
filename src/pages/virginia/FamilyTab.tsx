@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import Reveal from '@/components/Reveal';
-import { CHILDREN, GRANDCHILDREN } from '@/pages/virginia/data';
+import { CHILDREN, GRANDCHILDREN, ORIGIN_FAMILY_COPY, PARENTS, SIBLINGS } from '@/pages/virginia/data';
 import type { FamilyMember } from '@/pages/virginia/data';
 
 function MemberCard({ member, index }: { member: FamilyMember; index: number }) {
@@ -50,6 +50,22 @@ export default function FamilyTab() {
           Seven children and eighteen grandchildren — the family she raised, guided, and loved.
         </p>
       </Reveal>
+
+      {/* Her parents and nine siblings — a place kept, not filled with guesses */}
+      <SectionDivider label="Her Parents and Siblings" />
+      {PARENTS.length === 0 && SIBLINGS.length === 0 ? (
+        <Reveal>
+          <div className="mt-6 rounded-sm border border-dashed border-brass/60 p-6">
+            <p className="max-w-reading leading-relaxed text-soft">{ORIGIN_FAMILY_COPY}</p>
+          </div>
+        </Reveal>
+      ) : (
+        <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[...PARENTS, ...SIBLINGS].map((m, i) => (
+            <MemberCard key={m.name} member={m} index={i} />
+          ))}
+        </ul>
+      )}
 
       <SectionDivider label="Her Children" />
       <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

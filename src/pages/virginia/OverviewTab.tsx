@@ -10,17 +10,22 @@ import Timeline from '@/components/Timeline';
 import MemorialGallery from '@/pages/virginia/MemorialGallery';
 import {
   BIOGRAPHY,
+  BOOKLET_EPIGRAPH,
+  BOOKLET_TRIBUTES,
   BOOKLETS,
   BOOKLETS_COPY,
+  FAMILY_TRIBUTES,
   GALLERY,
   GALLERY_CAPTION,
   HYMN,
   LIFE_TIMELINE,
   MEMORIAL_URL,
-  POEM_LINES,
+  POEM_STANZAS,
+  POEM_TITLE,
   RESTING_PLACE,
   SCRIPTURES,
-  TRIBUTES,
+  TRIBUTES_AWAITED,
+  TRIBUTES_AWAITED_COPY,
   VOICE_NOTE,
 } from '@/pages/virginia/data';
 
@@ -47,16 +52,16 @@ export default function OverviewTab() {
         </div>
       </section>
 
-      {/* 2 — Tributes from Her Children and Family */}
+      {/* 2 — Tributes: two sets, kept separate. Family words first. */}
       <section aria-labelledby="tributes">
         <Reveal>
           <p className="eyebrow">With love</p>
           <h2 id="tributes" className="type-h2 mt-4 text-body">
-            Tributes from Her Children and Family
+            Family Tributes
           </h2>
         </Reveal>
         <ul className="mt-8 space-y-6">
-          {TRIBUTES.map((t, i) => (
+          {FAMILY_TRIBUTES.map((t, i) => (
             <Reveal as="li" key={t.name} delay={Math.min(i, 4) * 0.08}>
               <blockquote className="card-raised p-6 sm:p-8">
                 <span aria-hidden className="font-display text-4xl leading-none text-brass">
@@ -70,6 +75,47 @@ export default function OverviewTab() {
             </Reveal>
           ))}
         </ul>
+
+        {/* Second set — printed in the memorial booklet, a different occasion */}
+        <Reveal>
+          <h3 id="booklet-tributes" className="type-h3 mt-16 text-body">
+            From the Memorial Booklet
+          </h3>
+          <p className="type-meta mt-2 text-soft">
+            Printed in <em>Gogo Chiimba</em>, Vol. 1 — “You will never be forgotten”.
+          </p>
+        </Reveal>
+        <ul className="mt-8 space-y-6">
+          {BOOKLET_TRIBUTES.map((t, i) => (
+            <Reveal as="li" key={`booklet-${t.name}`} delay={Math.min(i, 4) * 0.08}>
+              <blockquote className="card-raised p-6 sm:p-8">
+                <span aria-hidden className="font-display text-4xl leading-none text-brass">
+                  “
+                </span>
+                <p className="type-quote mt-2 text-body">{t.quote}</p>
+                <footer className="type-meta mt-4 text-soft">
+                  — {t.name} <span aria-hidden>·</span> {t.relation}
+                </footer>
+              </blockquote>
+            </Reveal>
+          ))}
+        </ul>
+
+        {/* A place kept for the children whose words have not yet come */}
+        {TRIBUTES_AWAITED.length > 0 && (
+          <Reveal delay={0.1}>
+            <div className="mt-10 rounded-sm border border-dashed border-brass/60 p-6">
+              <p className="type-meta text-soft">{TRIBUTES_AWAITED_COPY}</p>
+              <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+                {TRIBUTES_AWAITED.map((t) => (
+                  <li key={t.name} className="font-display text-lg italic text-soft">
+                    {t.name} <span className="type-meta not-italic">· {t.relation}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+        )}
       </section>
 
       {/* 3 — Scripture */}
@@ -102,24 +148,56 @@ export default function OverviewTab() {
           />
           <div>
             <p className="eyebrow">A Hymn She Loved</p>
-            <p className="type-quote mt-4 text-body">“{HYMN.shona}”</p>
-            <p className="mt-3 text-sm italic text-soft">{HYMN.translation}</p>
+            <h3 className="type-h3 mt-4 text-body">{HYMN.shonaTitle}</h3>
+            <div className="mt-5 space-y-5">
+              {HYMN.shona.map((stanza, si) => (
+                <div key={si}>
+                  <p className="type-quote text-body">
+                    {stanza.map((line, li) => (
+                      <span key={li} className="block">
+                        {line}
+                      </span>
+                    ))}
+                  </p>
+                  <p className="mt-2 text-sm italic leading-relaxed text-soft">
+                    {HYMN.english[si]?.map((line, li) => (
+                      <span key={li} className="block">
+                        {line}
+                      </span>
+                    ))}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="type-meta mt-5 text-soft">
+              {HYMN.englishTitle} <span aria-hidden>·</span> {HYMN.attribution}
+            </p>
           </div>
         </div>
       </Reveal>
 
       {/* 5 — Poem — "Forever in Our Hearts" */}
-      <Reveal as="section" aria-label="Poem — Forever in Our Hearts">
+      <Reveal as="section" aria-label="Poem — Forever in our hearts">
         <div className="text-center">
           <hr className="brass-rule mx-auto" aria-hidden />
-          <h3 className="type-h3 mt-8 text-body">Forever in Our Hearts</h3>
-          <div className="type-quote mt-6 space-y-1.5 text-body">
-            {POEM_LINES.slice(0, 8).map((line) => (
-              <p key={line}>{line}</p>
+          <h3 className="type-h3 mt-8 text-body">{POEM_TITLE}</h3>
+          <div className="mt-8 space-y-7">
+            {POEM_STANZAS.map((stanza, si) => (
+              <div key={si} className="type-quote space-y-1.5 text-body">
+                {stanza.map((line, li) => (
+                  <p key={li}>{line}</p>
+                ))}
+              </div>
             ))}
           </div>
-          <p className="type-quote mt-6 text-body">{POEM_LINES[8]}</p>
-          <hr className="brass-rule mx-auto mt-8" aria-hidden />
+          <hr className="brass-rule mx-auto mt-10" aria-hidden />
+          <p className="mt-8 font-display text-lg italic leading-relaxed text-soft">
+            {BOOKLET_EPIGRAPH.map((line, i) => (
+              <span key={i} className="block">
+                {line}
+              </span>
+            ))}
+          </p>
         </div>
       </Reveal>
 
