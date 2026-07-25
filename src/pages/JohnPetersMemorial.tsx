@@ -335,22 +335,23 @@ export default function JohnPetersMemorial() {
       <div ref={tabBarAnchor} className="scroll-mt-[72px]" aria-hidden />
       <MemorialTabBar active={tab} onSelect={(t) => selectTab(t, false)} />
 
-      {/* Tab content — crossfade 250ms with 8px rise (design.md §5) */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={tab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-        >
-          {tab === 'journey' && <JourneyTab />}
-          {tab === 'memorial' && <MemorialTab onNavigate={selectTab} />}
-          {tab === 'glen' && <GlenTab onNavigate={selectTab} />}
-          {tab === 'tree' && <TreeTab />}
-          {tab === 'legacy' && <LegacyTab />}
-        </motion.div>
-      </AnimatePresence>
+      {/* Tab content — 250ms fade with 8px rise (design.md §5).
+          Deliberately NOT wrapped in AnimatePresence mode="wait": that holds the
+          incoming tab back until the outgoing tab's exit animation completes, and
+          under React 19 that callback can be deferred, leaving the panel blank
+          until another render forces it. Content must appear on the click. */}
+      <motion.div
+        key={tab}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+      >
+        {tab === 'journey' && <JourneyTab />}
+        {tab === 'memorial' && <MemorialTab onNavigate={selectTab} />}
+        {tab === 'glen' && <GlenTab onNavigate={selectTab} />}
+        {tab === 'tree' && <TreeTab />}
+        {tab === 'legacy' && <LegacyTab />}
+      </motion.div>
     </div>
   );
 }
