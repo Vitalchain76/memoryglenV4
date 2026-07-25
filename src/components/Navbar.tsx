@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/useAuth';
 import { Link, NavLink, useLocation } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, Search, X } from 'lucide-react';
@@ -19,6 +20,26 @@ const NAV_LINKS = [
  * Positioning contract: sticky in normal flow — pages do NOT compensate for
  * nav height.
  */
+/** Sign in / account. Hidden entirely when accounts are not configured. */
+function AccountLink({ mobile = false }: { mobile?: boolean }) {
+  const { user, configured } = useAuth();
+  if (!configured) return null;
+  const to = user ? '/account' : '/signin';
+  const label = user ? 'My account' : 'Sign in';
+  return mobile ? (
+    <Link to={to} className="btn btn-outline-evergreen w-full">
+      {label}
+    </Link>
+  ) : (
+    <Link
+      to={to}
+      className="hidden text-[0.9375rem] font-medium text-soft transition-colors hover:text-evergreen sm:inline-flex"
+    >
+      {label}
+    </Link>
+  );
+}
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -98,6 +119,7 @@ export default function Navbar() {
             >
               Sign In
             </Link>
+            <AccountLink />
             <Link to="/create" className="btn btn-evergreen hidden !min-h-11 px-5 py-2 text-[0.9375rem] sm:inline-flex">
               Get Started
             </Link>
@@ -201,6 +223,7 @@ export default function Navbar() {
                 transition={{ delay: 0.06 * NAV_LINKS.length, duration: 0.3 }}
                 className="mt-8"
               >
+                <AccountLink mobile />
                 <Link to="/create" className="btn btn-evergreen w-full">
                   Get Started
                 </Link>

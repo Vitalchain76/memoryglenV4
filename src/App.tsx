@@ -5,6 +5,9 @@ import Memorials from '@/pages/Memorials';
 import MemorialVirginia from '@/pages/MemorialVirginia';
 import JohnPetersMemorial from '@/pages/JohnPetersMemorial';
 import MemorialPage from '@/pages/MemorialPage';
+import SignIn from '@/pages/SignIn';
+import Account from '@/pages/Account';
+import { AuthProvider } from '@/lib/AuthProvider';
 import Themes from '@/pages/Themes';
 import FuneralParlours from '@/pages/FuneralParlours';
 import BurialSocieties from '@/pages/BurialSocieties';
@@ -18,24 +21,29 @@ import Create from '@/pages/Create';
  */
 export default function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/memorials" element={<Memorials />} />
-        <Route path="/memorials/virginia-dadirayi-chiimba" element={<MemorialVirginia />} />
-        <Route path="/memorials/john-peters" element={<JohnPetersMemorial />} />
+    <AuthProvider>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/memorials" element={<Memorials />} />
+          <Route path="/memorials/virginia-dadirayi-chiimba" element={<MemorialVirginia />} />
+          <Route path="/memorials/john-peters" element={<JohnPetersMemorial />} />
         {/* Every other slug falls back to the content-pack dataset.
             Declared AFTER the two template routes so they always win. */}
-        <Route path="/memorials/:slug" element={<MemorialPage />} />
-        <Route path="/themes" element={<Themes />} />
-        <Route path="/funeral-parlours" element={<FuneralParlours />} />
-        <Route path="/funeral-parlours/register" element={<Navigate to="/funeral-parlours" replace />} />
-        <Route path="/burial-societies" element={<BurialSocieties />} />
-        <Route path="/plans" element={<Plans />} />
-        <Route path="/service-providers" element={<ServiceProviders />} />
-        <Route path="/create" element={<Create />} />
-        <Route path="*" element={<Memorials />} />
-      </Routes>
-    </Layout>
+          <Route path="/memorials/:slug" element={<MemorialPage />} />
+        {/* Accounts. Memorial routes above stay public and ungated. */}
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/account" element={<Account />} />
+          <Route path="/themes" element={<Themes />} />
+          <Route path="/funeral-parlours" element={<FuneralParlours />} />
+          <Route path="/funeral-parlours/register" element={<Navigate to="/funeral-parlours" replace />} />
+          <Route path="/burial-societies" element={<BurialSocieties />} />
+          <Route path="/plans" element={<Plans />} />
+          <Route path="/service-providers" element={<ServiceProviders />} />
+          <Route path="/create" element={<Create />} />
+          <Route path="*" element={<Memorials />} />
+        </Routes>
+      </Layout>
+    </AuthProvider>
   );
 }
