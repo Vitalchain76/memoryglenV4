@@ -257,21 +257,36 @@ export interface GalleryItem {
   category: 'Family' | 'Church' | 'Seke';
 }
 
-/** 13 media placeholders — the family replaces these with real photographs. */
+/**
+ * Her real photographs, supplied by the family. The thirteen stock placeholders
+ * that stood here before have been removed entirely.
+ *
+ * Captions describe only what is visible. Nothing is asserted about occasion,
+ * date or place beyond what the family has confirmed — a photograph of a
+ * birthday is captioned as a birthday, not as a particular birthday. The family
+ * will replace these with their own captions.
+ */
 export const GALLERY: GalleryItem[] = [
-  { src: '/virginia-gallery-1.jpg', caption: 'Sunday lunch at home — sadza, relish, and everyone together', category: 'Family' },
-  { src: '/virginia-gallery-2.jpg', caption: 'Her well-worn Bible, read every morning', category: 'Church' },
-  { src: '/virginia-gallery-3.jpg', caption: 'The homestead at dusk, Seke', category: 'Seke' },
-  { src: '/virginia-gallery-4.jpg', caption: 'Hymn book and choir robes — she loved to sing', category: 'Church' },
-  { src: '/virginia-gallery-1.jpg', caption: 'A family gathering, everyone at the table', category: 'Family' },
-  { src: '/virginia-gallery-3.jpg', caption: 'Quiet evening in Zinganga', category: 'Seke' },
-  { src: '/virginia-gallery-4.jpg', caption: 'Sunday service with the choir', category: 'Church' },
-  { src: '/virginia-gallery-2.jpg', caption: 'Morning devotion and prayer', category: 'Church' },
-  { src: '/virginia-gallery-1.jpg', caption: 'Celebrating together, as she taught us', category: 'Family' },
-  { src: '/virginia-gallery-3.jpg', caption: 'The Seke hills she called home', category: 'Seke' },
-  { src: '/virginia-gallery-1.jpg', caption: 'Grandchildren visiting Gogo', category: 'Family' },
-  { src: '/virginia-gallery-2.jpg', caption: 'Her favourite verses, marked and treasured', category: 'Church' },
-  { src: '/virginia-gallery-3.jpg', caption: 'Smoke from the kitchen fire, home at last', category: 'Seke' },
+  { src: '/virginia-portrait-primary.jpg', caption: 'The photograph her family chose for the memorial booklet', category: 'Family' },
+  { src: '/virginia-portrait-thoughtful.jpg', caption: 'A quiet moment', category: 'Family' },
+  { src: '/virginia-portrait-white-blazer.jpg', caption: 'Dressed for the day', category: 'Family' },
+  { src: '/virginia-young-studio-portrait.jpg', caption: 'A studio portrait from her younger years', category: 'Family' },
+  { src: '/virginia-laughing-with-family.jpg', caption: 'Laughing, held on both sides', category: 'Family' },
+  { src: '/virginia-laughing-on-the-couch.jpg', caption: 'An evening at home', category: 'Family' },
+  { src: '/virginia-selfie-with-grandchildren.jpg', caption: 'With two of her grandchildren', category: 'Family' },
+  { src: '/virginia-birthday-celebration.jpg', caption: 'A birthday, surrounded by family', category: 'Family' },
+  { src: '/virginia-with-grandsons.jpg', caption: 'With her grandsons', category: 'Family' },
+  { src: '/virginia-with-grandchildren.jpg', caption: 'Sitting with her grandchildren', category: 'Family' },
+  { src: '/virginia-her-children.jpg', caption: 'Her children together', category: 'Family' },
+  { src: '/virginia-family-four.jpg', caption: 'Family, gathered outdoors', category: 'Family' },
+  { src: '/virginia-with-son-indoors.jpg', caption: 'With one of her sons', category: 'Family' },
+  { src: '/virginia-with-son-outdoors.jpg', caption: 'With one of her sons', category: 'Family' },
+  { src: '/virginia-family-dinner.jpg', caption: 'Around the table', category: 'Family' },
+  { src: '/virginia-family-outing.jpg', caption: 'A family outing', category: 'Family' },
+  { src: '/virginia-speaking-lectern.jpg', caption: 'Reading at a service', category: 'Church' },
+  { src: '/virginia-resting-place-pergola.jpg', caption: 'Her resting place at Seke, at sunset', category: 'Seke' },
+  { src: '/virginia-headstone.jpg', caption: 'Her stone \u2014 7 June 1955 to 19 May 2025', category: 'Seke' },
+  { src: '/virginia-parents-at-her-graveside.jpg', caption: 'Sekuru Johannes and Ambuya Juliana at their daughter\u2019s graveside', category: 'Seke' },
 ];
 
 export const GALLERY_CAPTION =
@@ -296,7 +311,7 @@ export const BOOKLETS_COPY =
 export const RESTING_PLACE = {
   title: 'Seke, Zinganga, Zimbabwe',
   copy: 'Virginia Dadirayi Chiimba was laid to rest in Seke, Zinganga, the community she called home. Her grave stands as a quiet place of remembrance where family and friends can visit, reflect, and feel close to her enduring spirit.',
-  photos: ['/virginia-grave-1.jpg', '/virginia-grave-2.jpg'],
+  photos: ['/virginia-resting-place-pergola.jpg', '/virginia-headstone.jpg'],
   caption: 'Photos from Seke, Zinganga — May her soul rest in eternal peace.',
 };
 
@@ -468,9 +483,9 @@ export interface ServiceVideo {
 }
 
 export const SERVICE_VIDEOS: ServiceVideo[] = [
-  { title: 'Funeral Service — Part 1', thumbnail: '/virginia-gallery-4.jpg' },
-  { title: 'Funeral Service — Part 2', thumbnail: '/virginia-gallery-3.jpg' },
-  { title: 'Funeral Service — Part 3', thumbnail: '/virginia-gallery-2.jpg' },
+  { title: 'Funeral Service — Part 1', thumbnail: '/virginia-resting-place-pergola.jpg' },
+  { title: 'Funeral Service — Part 2', thumbnail: '/virginia-headstone.jpg' },
+  { title: 'Funeral Service — Part 3', thumbnail: '/virginia-family-outing.jpg' },
 ];
 
 export const VIDEOS_META = 'Recorded 25 October 2025 · Mushore Homestead, Seke';

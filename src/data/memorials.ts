@@ -137,7 +137,11 @@ const BY_SLUG = new Map(MEMORIALS.map((m) => [m.slug, m]));
 export const LISTED_MEMORIALS = MEMORIALS.filter((m) => !m.unlisted);
 
 /** The Chiimba family glen — those who rest with Virginia, oldest first. */
-export const CHIIMBA_GLEN_SLUGS = ['chari-chiimba', 'moses-sarire-ivhu-chiimba'] as const;
+export const CHIIMBA_GLEN_SLUGS = [
+  'chari-chiimba',
+  'timothy-chiimba',
+  'moses-sarire-ivhu-chiimba',
+] as const;
 
 export const CHIIMBA_GLEN = CHIIMBA_GLEN_SLUGS
   .map((slug) => BY_SLUG.get(slug))

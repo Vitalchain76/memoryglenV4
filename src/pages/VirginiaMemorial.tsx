@@ -8,7 +8,7 @@ import JourneyTab from '@/pages/virginia/JourneyTab';
 import MemorialTab from '@/pages/virginia/MemorialTab';
 import GlenTab from '@/pages/virginia/GlenTab';
 import TreeTab from '@/pages/virginia/TreeTab';
-import LegacyTab from '@/pages/john-peters/LegacyTab';
+import LegacyTab from '@/pages/virginia/LegacyTab';
 import {
   CHILDREN,
   GRANDCHILDREN,

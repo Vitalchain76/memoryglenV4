@@ -139,7 +139,7 @@ export default function OverviewTab() {
       <Reveal as="section" aria-label="Shona hymn">
         <div className="card-raised flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:p-8">
           <img
-            src="/virginia-gallery-4.jpg"
+            src="/virginia-portrait-primary.jpg"
             alt="Hymn book and choir robes on a church pew"
             width={220}
             height={147}
@@ -225,14 +225,14 @@ export default function OverviewTab() {
               {
                 title: 'Her Favourite Hymn',
                 artist: 'YouTube Music',
-                thumbnail: '/virginia-gallery-4.jpg',
+                thumbnail: '/virginia-portrait-primary.jpg',
               },
             ]}
             spotifyTracks={[
               {
                 title: 'Family Hymn Playlist',
                 artist: 'Spotify · the hymns she sang',
-                thumbnail: '/virginia-gallery-4.jpg',
+                thumbnail: '/virginia-portrait-primary.jpg',
               },
             ]}
             uploadedTracks={[

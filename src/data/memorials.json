@@ -3218,5 +3218,63 @@
       },
       "gallery": []
     }
+  },
+  {
+    "slug": "timothy-chiimba",
+    "name": "Timothy Chiimba",
+    "years": "1926–1989",
+    "birthYear": 1926,
+    "deathYear": 1989,
+    "location": "Seke, Zimbabwe",
+    "tagline": "",
+    "pronoun": "his",
+    "features": [],
+    "candles": 0,
+    "communityMemorial": false,
+    "unlisted": true,
+    "awaitingContent": true,
+    "familyRelation": "Uncle",
+    "glenNote": "Rests in the Chiimba family glen.",
+    "biographyTitle": "His Life",
+    "biography": [],
+    "tributesTitle": "Tributes",
+    "tributes": [],
+    "scripture": [],
+    "hymn": {
+      "original": "",
+      "language": "",
+      "translation": ""
+    },
+    "poem": {
+      "title": "",
+      "lines": [],
+      "closing": ""
+    },
+    "favouriteSong": {
+      "title": "",
+      "artist": "",
+      "description": "",
+      "youtubeSearch": "",
+      "playlistNote": ""
+    },
+    "voiceNote": {
+      "title": "",
+      "description": "",
+      "duration": "0:00"
+    },
+    "galleryCaption": "",
+    "booklets": [],
+    "restingPlace": {
+      "name": "Chiimba Family Glen",
+      "description": ""
+    },
+    "timeline": [],
+    "images": {
+      "portrait": {
+        "prompt": "",
+        "stockSearch": ""
+      },
+      "gallery": []
+    }
   }
 ]
