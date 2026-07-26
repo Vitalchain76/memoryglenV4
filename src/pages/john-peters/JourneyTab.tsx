@@ -528,7 +528,7 @@ function ClosingCTA() {
 /* ---------- Tab ---------- */
 export default function JourneyTab() {
   return (
-    <div className="container-content flex gap-12">
+    <div className="container-content flex flex-col gap-12 xl:flex-row">
       <div className="w-full min-w-0 max-w-[880px]">
         <JourneyHero />
         <Tracker />
@@ -537,7 +537,7 @@ export default function JourneyTab() {
         <Booklet />
         <ClosingCTA />
       </div>
-      <ServiceProviderRail providers={RAIL_PROVIDERS} className="mt-24" />
+      <ServiceProviderRail providers={RAIL_PROVIDERS} className="mt-24" belowStickyTabs />
     </div>
   );
 }
