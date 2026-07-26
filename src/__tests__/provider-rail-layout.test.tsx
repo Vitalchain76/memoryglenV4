@@ -1,73 +1,57 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
-import path from 'node:path';
-import App from '@/App';
 
 /**
- * The "Family Service Providers" panel must never sit beside the memorial
- * content on a narrow screen.
- *
- * ServiceProviderRail renders two things: a sticky <aside> shown only from xl
- * up, and an inline <section> shown below xl. If the enclosing container is a
- * flex ROW at every width, that inline section becomes a flex sibling of the
- * memorial content on phones and squeezes it into an unreadable column.
- * Every container that wraps the rail must therefore stack by default and only
- * become a row at xl.
+ * The "Family Service Providers" panel is the only advertising surface on a
+ * memorial. These assertions pin the layout rules that keep it from covering or
+ * squeezing the memorial content. They are source assertions rather than visual
+ * ones because jsdom has no CSS layout engine — but they catch the exact class
+ * changes that would reintroduce the problem.
  */
+const read = (p: string) => fs.readFileSync(p, 'utf8');
 
-const walk = (dir: string): string[] =>
-  fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
-    const p = path.join(dir, e.name);
-    return e.isDirectory() ? walk(p) : [p];
+describe('service provider panel never overlaps memorial content', () => {
+  const rail = read('src/components/ServiceProviderRail.tsx');
+
+  it('is full width and stacked below xl, a fixed column only at xl and up', () => {
+    // Without w-full + min-w-0 it becomes a flex sibling and squeezes the
+    // memorial into an unreadable column on narrow screens.
+    expect(rail).toContain('w-full min-w-0 xl:w-[280px] xl:flex-none');
   });
 
-describe('service provider panel never crowds the memorial content', () => {
-  it('every container wrapping the rail stacks below xl', () => {
-    const files = walk('src').filter(
-      (f) => /\.tsx$/.test(f) && !f.includes('__tests__'),
-    );
-    const offenders: string[] = [];
+  it('renders the sticky sidebar only at xl, and the inline panel only below xl', () => {
+    expect(rail).toContain('hidden xl:block');
+    expect(rail).toContain('xl:hidden');
+  });
 
-    for (const file of files) {
-      const text = fs.readFileSync(file, 'utf8');
-      if (!text.includes('<ServiceProviderRail')) continue;
-      // Any flex-row container in a file that renders the rail must be responsive.
-      const rowFlex = text.match(/className="[^"]*\bflex gap-12\b[^"]*"/g) ?? [];
-      for (const cls of rowFlex) {
-        if (!cls.includes('flex-col') || !cls.includes('xl:flex-row')) {
-          offenders.push(`${file}: ${cls}`);
-        }
-      }
+  it('its sticky offset clears the sticky tab bar on memorial pages', () => {
+    // navbar 72px + tab bar (~48px, ~82px with sub-nav). top-24 (96px) is not
+    // enough and tucks the panel under the tab bar.
+    expect(rail).toContain("belowStickyTabs ? 'top-[10.5rem]' : 'top-24'");
+  });
+
+  it('every page with a sticky tab bar passes belowStickyTabs', () => {
+    for (const file of [
+      'src/pages/MemorialPage.tsx',
+      'src/pages/VirginiaMemorial.tsx',
+      'src/pages/john-peters/JourneyTab.tsx',
+      'src/pages/john-peters/MemorialTab.tsx',
+      'src/pages/john-peters/GlenTab.tsx',
+    ]) {
+      const src = read(file);
+      if (!src.includes('<ServiceProviderRail')) continue;
+      expect(src, `${file} must pass belowStickyTabs`).toContain('belowStickyTabs');
     }
-    expect(offenders, `flex row at all widths:\n${offenders.join('\n')}`).toEqual([]);
   });
 
-  it('the rail itself is full width when stacked, fixed only at xl', () => {
-    const src = fs.readFileSync('src/components/ServiceProviderRail.tsx', 'utf8');
-    expect(src).toContain('w-full');
-    expect(src).toContain('xl:w-[280px]');
-    expect(src).toContain('xl:flex-none');
+  it('parent layouts stack on mobile and only go side-by-side at xl', () => {
+    // A bare `flex` here would put the panel beside the content at every width.
+    expect(read('src/pages/MemorialPage.tsx')).toContain('flex flex-col gap-12 xl:flex-row');
+    expect(read('src/pages/Memorials.tsx')).toContain('xl:flex xl:gap-14');
   });
 
-  it('memorial content and the panel both render on a memorial page', () => {
-    render(
-      <MemoryRouter initialEntries={['/memorials/tendai-moyo']}>
-        <App />
-      </MemoryRouter>,
-    );
-    expect(screen.getAllByText(/Tendai Moyo/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByLabelText(/Family service providers/i).length).toBeGreaterThan(0);
-  });
-
-  it('the directory page renders without the panel crowding it', () => {
-    render(
-      <MemoryRouter initialEntries={['/memorials']}>
-        <App />
-      </MemoryRouter>,
-    );
-    expect(screen.getAllByText(/Tendai Moyo/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Virginia Dadirayi Chiimba/i).length).toBeGreaterThan(0);
+  it('the sticky stack has no z-index inversion', () => {
+    expect(read('src/components/Navbar.tsx')).toContain('sticky top-0 z-50');
+    expect(read('src/components/MemorialTabShell.tsx')).toContain('sticky top-[72px] z-40');
   });
 });

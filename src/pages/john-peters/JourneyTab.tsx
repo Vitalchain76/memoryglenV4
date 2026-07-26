@@ -537,7 +537,7 @@ export default function JourneyTab() {
         <Booklet />
         <ClosingCTA />
       </div>
-      <ServiceProviderRail providers={RAIL_PROVIDERS} className="mt-24" />
+      <ServiceProviderRail providers={RAIL_PROVIDERS} className="mt-24" belowStickyTabs />
     </div>
   );
 }

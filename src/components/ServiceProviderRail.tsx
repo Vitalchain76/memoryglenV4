@@ -56,9 +56,12 @@ function PaidListing() {
 export default function ServiceProviderRail({
   providers = DEFAULT_PROVIDERS,
   className,
+  belowStickyTabs = false,
 }: {
   providers?: ServiceProvider[];
   className?: string;
+  /** Set on pages that have a sticky tab bar above this rail. */
+  belowStickyTabs?: boolean;
 }) {
   const featured = providers.find((p) => p.tier === 'featured');
   const standard = providers.filter((p) => p.tier === 'standard');
@@ -133,7 +136,12 @@ export default function ServiceProviderRail({
     <div className={cn('w-full min-w-0 xl:w-[280px] xl:flex-none', className)}>
       {/* Sticky rail — ≥1280px only */}
       <aside className="hidden xl:block" aria-label="Family service providers">
-        <div className="sticky top-24">{body}</div>
+        {/* The sticky offset must clear whatever is sticky above it. On a
+            memorial page that is the navbar (72px) plus the tab bar (~48px,
+            ~82px with sub-navigation); on the directory it is the navbar
+            alone. Too small an offset tucks this panel underneath the tab bar
+            and hides its top. */}
+        <div className={cn('sticky', belowStickyTabs ? 'top-[10.5rem]' : 'top-24')}>{body}</div>
       </aside>
       {/* Inline collapse — below 1280px */}
       <section className="xl:hidden" aria-label="Family service providers">

@@ -704,7 +704,7 @@ export default function GlenTab({ onNavigate }: { onNavigate: (tab: JohnPetersTa
             </ul>
           </section>
         </div>
-        <ServiceProviderRail providers={RAIL_PROVIDERS} />
+        <ServiceProviderRail providers={RAIL_PROVIDERS} belowStickyTabs />
       </div>
 
       <EmblemStudio />

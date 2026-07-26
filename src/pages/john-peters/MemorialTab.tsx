@@ -803,7 +803,7 @@ export default function MemorialTab({ onNavigate }: { onNavigate: (tab: JohnPete
           <RestingPlace onNavigate={onNavigate} />
           <LifeTimeline />
         </div>
-        <ServiceProviderRail providers={RAIL_PROVIDERS} className="mt-24" />
+        <ServiceProviderRail providers={RAIL_PROVIDERS} className="mt-24" belowStickyTabs />
       </div>
       <ClosingQuote />
     </div>

@@ -740,7 +740,7 @@ function MemorialBody({ memorial }: { memorial: Memorial }) {
             </section>
           </div>
 
-          <ServiceProviderRail providers={RAIL_PROVIDERS} />
+          <ServiceProviderRail providers={RAIL_PROVIDERS} belowStickyTabs />
         </div>
       </div>
 

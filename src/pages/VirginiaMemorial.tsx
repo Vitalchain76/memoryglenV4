@@ -83,7 +83,7 @@ export default function VirginiaMemorial() {
       </MemorialTabShell>
 
       <div className="container-content pb-16 md:pb-24">
-        <ServiceProviderRail providers={PROVIDERS} />
+        <ServiceProviderRail providers={PROVIDERS} belowStickyTabs />
       </div>
     </div>
   );
