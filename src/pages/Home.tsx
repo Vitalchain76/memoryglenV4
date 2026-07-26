@@ -18,6 +18,7 @@ import CandleFlame from '@/components/CandleFlame';
 import Hero from '@/pages/home/Hero';
 import JohnDemo from '@/pages/home/JohnDemo';
 import HowItWorks from '@/pages/home/HowItWorks';
+import FamilyGlenExplainer from '@/pages/home/FamilyGlenExplainer';
 
 /* ---------- Section 5 — Feature grid ---------- */
 const FEATURES = [
@@ -259,9 +260,12 @@ export default function Home() {
   return (
     <>
       <Hero />
+      {/* Explain the product before showing it off: three steps, then the one
+          piece of jargon the whole site depends on. */}
+      <HowItWorks />
+      <FamilyGlenExplainer />
       <JohnDemo />
       <FiveTabs />
-      <HowItWorks />
       <FeatureGrid />
       <HomeStats />
       <PartnerBands />

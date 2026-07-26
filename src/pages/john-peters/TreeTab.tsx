@@ -3,6 +3,8 @@ import { Link } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Crosshair, Download, Lock, Maximize2, ShieldCheck, X } from 'lucide-react';
 import Reveal from '@/components/Reveal';
+import FamilyTree from '@/components/family/FamilyTree';
+import { buildJohnTree } from '@/pages/john-peters/familyTreeData';
 import StatBand from '@/components/StatBand';
 import TierGate from '@/components/TierGate';
 
@@ -782,6 +784,12 @@ export default function TreeTab() {
 
   return (
     <div className="container-content">
+      {/* The shared family tree — same component used on every memorial.
+          Readable on a phone without pinch-zoom; the interactive canvas below
+          is the desktop extra, not the primary way to read the family. */}
+      <section aria-label="Family tree" className="pt-12 md:pt-16">
+        <FamilyTree data={buildJohnTree()} />
+      </section>
       {/* Toast — slides down from the tab bar, auto-dismisses 3s */}
       <AnimatePresence>
         {toast && (

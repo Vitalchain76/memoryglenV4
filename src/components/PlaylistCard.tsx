@@ -71,7 +71,7 @@ export default function PlaylistCard({
                 setPlayingEmbed(null);
               }}
               className={cn(
-                'min-h-10 rounded-sm px-4 text-sm font-medium transition-colors duration-200',
+                'min-h-11 rounded-sm px-4 text-sm font-medium transition-colors duration-200',
                 tab === t.id ? 'bg-evergreen text-bone' : 'text-soft hover:text-body',
               )}
             >

@@ -61,8 +61,8 @@ export default function Hero() {
             transition={{ duration: 0.4, delay: 0.9 }}
             className="type-story mt-5 max-w-xl text-bone/85"
           >
-            A permanent place for memories, stories, voices, and family connection. Preserve the
-            lives and legacies of your loved ones across generations.
+            Build a lasting memorial for someone you love — their story, their photographs,
+            their voice — and invite your family to add to it from anywhere in the world.
           </motion.p>
 
           <motion.div
@@ -71,11 +71,12 @@ export default function Hero() {
             transition={{ duration: 0.4, delay: 1.05 }}
             className="mt-8 flex flex-wrap gap-4"
           >
-            <Link to="/create" className="btn btn-evergreen">
-              Create a Memorial — free
+            <Link to="/create" className="btn btn-evergreen min-h-12">
+              Create a Memorial
             </Link>
-            <Link to="/memorials" className="btn btn-outline-bone">
-              Browse Memorials
+            {/* Secondary must land on a real, populated memorial — not the directory. */}
+            <Link to="/memorials/john-peters" className="btn btn-outline-bone min-h-12">
+              View Demo Memorial
             </Link>
           </motion.div>
         </div>

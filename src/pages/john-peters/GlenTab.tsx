@@ -231,7 +231,7 @@ function GlenEntrance({
               type="button"
               onClick={() => setAmbience((a) => !a)}
               aria-pressed={ambience}
-              className="mt-2 flex min-h-10 w-full items-center justify-center gap-2 rounded-sm border border-bone/20 px-2 text-[11px] font-medium text-bone transition-colors hover:border-bone/50"
+              className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-sm border border-bone/20 px-2 text-[11px] font-medium text-bone transition-colors hover:border-bone/50"
             >
               <Volume2 size={12} aria-hidden />
               {ambience ? 'Hymn ambience · on' : 'Hymn ambience · off'}

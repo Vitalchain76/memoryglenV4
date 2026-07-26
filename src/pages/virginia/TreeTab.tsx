@@ -1,4 +1,6 @@
 import Reveal from '@/components/Reveal';
+import FamilyTree from '@/components/family/FamilyTree';
+import { buildVirginiaTree } from '@/pages/virginia/familyTreeData';
 import FamilyTab from '@/pages/virginia/FamilyTab';
 import { CHILDREN, GRANDCHILDREN, SIBLINGS } from '@/pages/virginia/data';
 
@@ -55,6 +57,12 @@ export default function TreeTab() {
         </Reveal>
       </section>
 
+      {/* The shared family tree — same component on every memorial */}
+      <section aria-label="Family tree">
+        <FamilyTree data={buildVirginiaTree()} />
+      </section>
+
+      {/* The full family listing, kept beneath */}
       <FamilyTab />
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Copy, Download, MessageCircle } from 'lucide-react';
+import { Check, Copy, Download, MessageCircle, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -111,6 +111,17 @@ export default function QRShareBlock({
                 SVG
               </button>
             </div>
+            {/* WhatsApp is how most families actually share a memorial link.
+                Uses the universal wa.me endpoint, which opens the app on a
+                phone and WhatsApp Web on a desktop. */}
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-h-12 items-center gap-2 rounded-sm border border-[color:var(--line)] bg-surface px-4 text-sm font-medium text-body transition-colors hover:bg-well"
+            >
+              <Share2 size={16} aria-hidden /> Share on WhatsApp
+            </a>
             <button
               type="button"
               onClick={copyLink}
