@@ -103,12 +103,21 @@ function collectPages() {
       path: `memorials/${m.slug}`,
       title: `${m.name} (${years}) — MemoryGlen`,
       description,
-      // No per-person photographs for the demo set; the site card is the fallback.
-      image: '/hero-home.jpg',
+      // Never the homepage hero — a shared memorial that unfurls with a picture
+      // of somebody else's landing page reads as careless. Use the person's own
+      // portrait where one exists, otherwise a neutral memorial card.
+      image: memorialImage(m),
       type: 'profile',
     });
   }
   return pages;
+}
+
+/** Portrait for a memorial, or a dignified neutral fallback. */
+function memorialImage(m) {
+  const portrait = `/memorial-portraits/${m.slug}.jpg`;
+  if (existsSync(join(root, 'public', portrait))) return portrait;
+  return '/og-memorial-fallback.jpg';
 }
 
 function withTags(html, page) {

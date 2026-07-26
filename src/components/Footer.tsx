@@ -107,6 +107,15 @@ export default function Footer() {
         <div className="container-content flex flex-col items-start justify-between gap-4 py-6 sm:flex-row sm:items-center">
           <div>
             <p className="text-sm text-sage">© 2026 MemoryGlen. All rights reserved.</p>
+            {/* Legal links — required on any site that stores personal data */}
+            <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-sage">
+              <Link to="/terms" className="underline-offset-4 transition-colors hover:text-brass-soft hover:underline">
+                Terms of Service
+              </Link>
+              <Link to="/privacy" className="underline-offset-4 transition-colors hover:text-brass-soft hover:underline">
+                Privacy Policy
+              </Link>
+            </p>
             {/* Founding credit — Virginia Dadirayi Chiimba is a real person and the
                 memorial this platform was built for. Quiet, permanent, never demo-labelled. */}
             <p className="mt-1.5 text-sm text-sage">
