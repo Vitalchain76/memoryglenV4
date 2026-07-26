@@ -362,26 +362,6 @@ export default function Memorials() {
           <section className="mt-14" aria-label="Featured memorials">
             <div className="grid gap-6 lg:grid-cols-2">
               <FeaturedCard
-                href="/memorials/virginia-dadirayi-chiimba"
-                img="/virginia-portrait-blue-headscarf.jpg"
-                imgAlt="Virginia Dadirayi Chiimba, smiling, in a bright blue headscarf"
-                name="Virginia Dadirayi Chiimba"
-                years="1955–2025"
-                line="A loving, caring, strong, and deeply faithful mother. The heart of our family."
-                stats={
-                  <>
-                    <CandleStat count={12} />
-                    <span className="inline-flex items-center gap-1.5">
-                      <Users size={14} aria-hidden className="text-evergreen" /> 25 Family
-                    </span>
-                  </>
-                }
-                badge="Founding Memorial"
-                badgeClasses="border border-brass bg-brass/10 text-brass"
-                cta="Visit Memorial"
-                delay={0}
-              />
-              <FeaturedCard
                 href="/memorials/john-peters"
                 img="/memorial-john-portrait.jpg"
                 imgAlt="Illustrative portrait of the fictional John Peters"
@@ -401,6 +381,27 @@ export default function Memorials() {
                 cta="Explore the Demo"
                 delay={0.1}
               />
+              <FeaturedCard
+                href="/memorials/virginia-dadirayi-chiimba"
+                img="/virginia-portrait-blue-headscarf.jpg"
+                imgAlt="Virginia Dadirayi Chiimba, smiling, in a bright blue headscarf"
+                name="Virginia Dadirayi Chiimba"
+                years="1955–2025"
+                line="A loving, caring, strong, and deeply faithful mother. The heart of our family."
+                stats={
+                  <>
+                    <CandleStat count={12} />
+                    <span className="inline-flex items-center gap-1.5">
+                      <Users size={14} aria-hidden className="text-evergreen" /> 25 Family
+                    </span>
+                  </>
+                }
+                badge="Founding Memorial"
+                badgeClasses="border border-brass bg-brass/10 text-brass"
+                cta="Visit Memorial"
+                delay={0}
+              />
+
             </div>
           </section>
 

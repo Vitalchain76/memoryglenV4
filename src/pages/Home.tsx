@@ -13,7 +13,6 @@ import {
   Video,
 } from 'lucide-react';
 import Reveal from '@/components/Reveal';
-import StatBand from '@/components/StatBand';
 import CandleFlame from '@/components/CandleFlame';
 import Hero from '@/pages/home/Hero';
 import JohnDemo from '@/pages/home/JohnDemo';
@@ -154,16 +153,23 @@ function HomeStats() {
   return (
     <section className="bg-forest-deep py-14" aria-label="MemoryGlen in numbers">
       <div className="container-content">
-        <StatBand
-          onDark
-          className="justify-between"
-          stats={[
-            { value: '500+', label: 'Families Served' },
-            { value: '200+', label: 'Livestreams' },
-            { value: '1K+', label: 'QR Codes' },
-            { value: '50+', label: 'Partner Parlours' },
-          ]}
-        />
+        {/* These were '500+ Families Served', '200+ Livestreams', '1K+ QR Codes'
+            and '50+ Partner Parlours'. MemoryGlen has not launched, so every one
+            of those numbers was untrue. Claiming traction you do not have is the
+            fastest way to lose the trust this product depends on, and it is the
+            kind of thing an investor checks.
+
+            Replaced with what is actually true today. Put real numbers back the
+            day they are real, and not before. */}
+        <div className="mx-auto max-w-reading text-center">
+          <p className="type-quote text-bone">
+            Built for families across Zimbabwe, South Africa and the diaspora \u2014
+            wherever a memorial link needs to reach.
+          </p>
+          <p className="type-meta mt-4 text-sage">
+            A memorial is free to create and stays free to visit.
+          </p>
+        </div>
       </div>
     </section>
   );

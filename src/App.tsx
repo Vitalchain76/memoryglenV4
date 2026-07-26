@@ -7,6 +7,8 @@ import JohnPetersMemorial from '@/pages/JohnPetersMemorial';
 import MemorialPage from '@/pages/MemorialPage';
 import SignIn from '@/pages/SignIn';
 import Account from '@/pages/Account';
+import Terms from '@/pages/Terms';
+import Privacy from '@/pages/Privacy';
 import { AuthProvider } from '@/lib/AuthProvider';
 import Themes from '@/pages/Themes';
 import FuneralParlours from '@/pages/FuneralParlours';
@@ -34,6 +36,8 @@ export default function App() {
         {/* Accounts. Memorial routes above stay public and ungated. */}
           <Route path="/signin" element={<SignIn />} />
           <Route path="/account" element={<Account />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="/themes" element={<Themes />} />
           <Route path="/funeral-parlours" element={<FuneralParlours />} />
           <Route path="/funeral-parlours/register" element={<Navigate to="/funeral-parlours" replace />} />
