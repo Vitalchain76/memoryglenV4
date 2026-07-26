@@ -20,10 +20,16 @@ const NAV_LINKS = [
  * Positioning contract: sticky in normal flow — pages do NOT compensate for
  * nav height.
  */
-/** Sign in / account. Hidden entirely when accounts are not configured. */
+/**
+ * Sign in / My account.
+ *
+ * Always rendered. It used to hide itself when Supabase was unconfigured, which
+ * meant a broken deployment silently had no way to sign in at all — and the only
+ * remaining button went to /create. The sign-in page explains the situation
+ * clearly if accounts are not ready; the link itself must always be there.
+ */
 function AccountLink({ mobile = false }: { mobile?: boolean }) {
-  const { user, configured } = useAuth();
-  if (!configured) return null;
+  const { user } = useAuth();
   const to = user ? '/account' : '/signin';
   const label = user ? 'My account' : 'Sign in';
   return mobile ? (
@@ -113,14 +119,13 @@ export default function Navbar() {
             >
               <Search size={20} aria-hidden />
             </button>
-            <Link
-              to="/create"
-              className="hidden min-h-12 items-center px-2 text-[0.9375rem] font-medium text-body transition-colors hover:text-evergreen sm:inline-flex"
-            >
-              Sign In
-            </Link>
+            {/* This said "Sign In" and linked to /create. Anyone trying to sign
+                in landed on the memorial-creation wizard instead. */}
             <AccountLink />
-            <Link to="/create" className="btn btn-evergreen hidden !min-h-11 px-5 py-2 text-[0.9375rem] sm:inline-flex">
+            <Link
+              to="/register"
+              className="btn btn-evergreen hidden !min-h-11 px-5 py-2 text-[0.9375rem] sm:inline-flex"
+            >
               Get Started
             </Link>
             <button
@@ -224,7 +229,7 @@ export default function Navbar() {
                 className="mt-8"
               >
                 <AccountLink mobile />
-                <Link to="/create" className="btn btn-evergreen w-full">
+                <Link to="/register" className="btn btn-evergreen w-full">
                   Get Started
                 </Link>
               </motion.div>
