@@ -1,7 +1,6 @@
 import Reveal from '@/components/Reveal';
 import FamilyTree from '@/components/family/FamilyTree';
 import { buildVirginiaTree } from '@/pages/virginia/familyTreeData';
-import FamilyTab from '@/pages/virginia/FamilyTab';
 import { CHILDREN, GRANDCHILDREN, SIBLINGS } from '@/pages/virginia/data';
 
 /**
@@ -13,8 +12,7 @@ import { CHILDREN, GRANDCHILDREN, SIBLINGS } from '@/pages/virginia/data';
  *       → her seven children
  *         → her eighteen grandchildren
  *
- * The full listing lives in FamilyTab, which this wraps. Nothing here is
- * inferred: no dates are estimated, no relationships are guessed, and living
+ * Nothing here is inferred: no dates are estimated, no relationships are guessed, and living
  * people are shown as living.
  */
 export default function TreeTab() {
@@ -62,8 +60,10 @@ export default function TreeTab() {
         <FamilyTree data={buildVirginiaTree()} />
       </section>
 
-      {/* The full family listing, kept beneath */}
-      <FamilyTab />
+      {/* NOTE: FamilyTab used to render here as well, which listed every
+          parent, sibling, child and grandchild a second time. The shared
+          FamilyTree above already shows all of them, grouped by generation.
+          One tree per memorial — do not add a second listing back. */}
     </div>
   );
 }
