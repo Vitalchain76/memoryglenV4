@@ -109,3 +109,57 @@ describe('launch readiness', () => {
     }
   });
 });
+
+describe('authentication routing', () => {
+  it('the header Sign In link no longer points at /create', () => {
+    const nav = read('src/components/Navbar.tsx');
+    // The mislabelled link is gone.
+    expect(nav).not.toMatch(/to="\/create"[\s\S]{0,200}Sign In/);
+  });
+
+  it('the sign-in link is always rendered, even when Supabase is unconfigured', () => {
+    const nav = read('src/components/Navbar.tsx');
+    expect(nav).not.toContain('if (!configured) return null;');
+    at('/');
+    expect(screen.getAllByRole('link', { name: /Sign in/i }).length).toBeGreaterThan(0);
+  });
+
+  it('/signin shows a Sign in page', () => {
+    at('/signin');
+    expect(screen.getAllByRole('heading', { name: /^Sign in$/i }).length).toBeGreaterThan(0);
+  });
+
+  it('/register, /signup and /create-account all show Create your account', () => {
+    for (const path of ['/register', '/signup', '/create-account']) {
+      const { unmount } = render(
+        <MemoryRouter initialEntries={[path]}><App /></MemoryRouter>,
+      );
+      expect(
+        screen.getAllByRole('heading', { name: /Create your account/i }).length,
+        `${path} should show the register page`,
+      ).toBeGreaterThan(0);
+      unmount();
+    }
+  });
+
+  it('/login reaches sign in, not the catch-all', () => {
+    at('/login');
+    expect(screen.getAllByRole('heading', { name: /^Sign in$/i }).length).toBeGreaterThan(0);
+  });
+
+  it('no auth route falls through to the memorial creation wizard', () => {
+    // "Create a Memorial" also appears as a header/footer link on every page,
+    // so assert on the page's own H1 rather than any occurrence of the phrase.
+    for (const path of ['/signin', '/login', '/register', '/signup']) {
+      const { unmount } = render(
+        <MemoryRouter initialEntries={[path]}><App /></MemoryRouter>,
+      );
+      const headings = screen.getAllByRole('heading', { level: 1 }).map((h) => h.textContent ?? '');
+      expect(
+        headings.some((h) => /Sign in|Create your account/i.test(h)),
+        `${path} showed headings: ${headings.join(' | ')}`,
+      ).toBe(true);
+      unmount();
+    }
+  });
+});

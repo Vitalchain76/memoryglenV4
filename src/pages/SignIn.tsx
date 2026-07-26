@@ -9,10 +9,10 @@ import { useAuth } from '@/lib/useAuth';
  * `?mode=register` opens on registration. Memorial pages remain public — this
  * exists so family can be invited in, not to gate the memorials.
  */
-export default function SignIn() {
+export default function SignIn({ initialMode }: { initialMode?: 'signin' | 'register' } = {}) {
   const [params] = useSearchParams();
   const [mode, setMode] = useState<'signin' | 'register'>(
-    params.get('mode') === 'register' ? 'register' : 'signin',
+    initialMode ?? (params.get('mode') === 'register' ? 'register' : 'signin'),
   );
   const { signIn, signUp, configured } = useAuth();
   const navigate = useNavigate();
@@ -64,10 +64,12 @@ export default function SignIn() {
         <Reveal>
           <p className="eyebrow">{registering ? 'Create an account' : 'Welcome back'}</p>
           <h1 className="type-h2 mt-4 text-body">
-            {registering ? 'Join your family on MemoryGlen' : 'Sign in'}
+            {registering ? 'Create your account' : 'Sign in'}
           </h1>
           <p className="mt-3 leading-relaxed text-soft">
-            Memorials stay open to everyone. An account lets you add memories and invite family.
+            {registering
+              ? 'An account lets you build a memorial, add memories and invite your family. Memorials stay open to everyone whether you have one or not.'
+              : 'Sign in to add to a memorial or invite family. Browsing memorials never needs an account.'}
           </p>
         </Reveal>
 
@@ -134,11 +136,14 @@ export default function SignIn() {
               <button
                 type="button"
                 onClick={() => {
-                  setMode(registering ? 'signin' : 'register');
+                  const next = registering ? 'signin' : 'register';
+                  setMode(next);
                   setError(null);
                   setNotice(null);
+                  // Keep the URL honest so the page is linkable and Back works.
+                  navigate(next === 'register' ? '/register' : '/signin', { replace: true });
                 }}
-                className="underline underline-offset-4 hover:text-evergreen"
+                className="min-h-11 underline underline-offset-4 hover:text-evergreen"
               >
                 {registering ? 'Sign in' : 'Create one'}
               </button>

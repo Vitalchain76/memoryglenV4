@@ -7,6 +7,7 @@ import JohnPetersMemorial from '@/pages/JohnPetersMemorial';
 import MemorialPage from '@/pages/MemorialPage';
 import SignIn from '@/pages/SignIn';
 import Account from '@/pages/Account';
+import Register from '@/pages/Register';
 import Terms from '@/pages/Terms';
 import Privacy from '@/pages/Privacy';
 import { AuthProvider } from '@/lib/AuthProvider';
@@ -34,7 +35,15 @@ export default function App() {
             Declared AFTER the two template routes so they always win. */}
           <Route path="/memorials/:slug" element={<MemorialPage />} />
         {/* Accounts. Memorial routes above stay public and ungated. */}
+          {/* Auth. Aliases exist because people type /login and /signup, and a
+              404 (or worse, the catch-all) at that moment loses the user. */}
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/login" element={<SignIn />} />
+          <Route path="/sign-in" element={<SignIn />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/signup" element={<Register />} />
+          <Route path="/sign-up" element={<Register />} />
+          <Route path="/create-account" element={<Register />} />
           <Route path="/account" element={<Account />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
