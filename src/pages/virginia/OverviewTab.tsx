@@ -300,7 +300,7 @@ export default function OverviewTab() {
                   <span className="block truncate text-sm font-medium text-body">{b.title}</span>
                   <span className="type-meta mt-0.5 block text-soft">PDF · {b.size}</span>
                 </span>
-                <span className="btn btn-outline-evergreen !min-h-10 flex-none px-4 py-1.5 text-sm">
+                <span className="btn btn-outline-evergreen !min-h-11 flex-none px-4 py-1.5 text-sm">
                   <Download size={14} aria-hidden /> Download
                 </span>
               </a>

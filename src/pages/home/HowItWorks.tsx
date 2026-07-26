@@ -6,20 +6,16 @@ gsap.registerPlugin(ScrollTrigger);
 
 const STEPS = [
   {
-    title: 'Register',
-    body: "Create your family's account in minutes. No cost to begin.",
+    title: 'Create a memorial in minutes',
+    body: 'A guided wizard gathers the story, the photographs, the voice notes and the songs.',
   },
   {
-    title: 'Create a Memorial',
-    body: 'A guided wizard gathers the story, photos, voice notes, and songs.',
+    title: 'Invite family to add their memories',
+    body: 'Brothers, sisters, children and grandchildren contribute from anywhere in the world.',
   },
   {
-    title: 'Invite Family',
-    body: 'Guardians and contributors join from anywhere in the world.',
-  },
-  {
-    title: 'Preserve Forever',
-    body: 'The memorial stays. The recording stays. The story stays.',
+    title: 'Build a Family Glen that connects generations',
+    body: 'Memorials link together, so one life sits inside the whole family story.',
   },
 ];
 
