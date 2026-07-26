@@ -835,8 +835,13 @@ export default function TreeTab() {
         </Reveal>
       </section>
 
-      {/* Section 2 — Tree canvas */}
-      <section className="pb-16" aria-label="The Peters family tree">
+      {/* Section 2 — Tree canvas, DESKTOP ONLY.
+          The canvas is a 560px-tall pan/zoom surface with `touch-none`, which
+          swallows swipe events. On a phone that means a swipe pans the tree
+          instead of scrolling the page, and the reader gets stuck against it.
+          The shared FamilyTree above already presents the whole family in a
+          form that reads at 320px, so the canvas is a large-screen extra. */}
+      <section className="hidden pb-16 lg:block" aria-label="The Peters family tree">
         <Reveal>
           <TreeCanvas linkConfirmed={linkConfirmed} onSelect={setSelected} selected={selected} />
         </Reveal>

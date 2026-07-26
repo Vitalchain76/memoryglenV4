@@ -144,3 +144,32 @@ describe('P4 Open Graph and sharing', () => {
     expect(read('src/components/QRShareBlock.tsx')).toContain('wa.me');
   });
 });
+
+/* ---------------- follow-up fixes ---------------- */
+describe('follow-up: base URL and mobile tree', () => {
+  it('the prerender base URL comes from the environment, never hard-coded', () => {
+    const s = read('scripts/prerender.mjs');
+    expect(s).not.toMatch(/const SITE = .*'https:\/\/memoryglen\.com'/);
+    expect(s).toContain('VERCEL_PROJECT_PRODUCTION_URL');
+    expect(s).toContain('SITE_URL');
+  });
+
+  it('prerender is idempotent — running twice must not duplicate tags', () => {
+    const s = read('scripts/prerender.mjs');
+    expect(s).toContain('rel="canonical"[^>]*>\\s*/gi');
+    expect(s).toContain('property="og:[^"]*"[^>]*>\\s*/gi');
+  });
+
+  it("John's pan/zoom canvas does not swallow touch scrolling on a phone", () => {
+    const s = read('src/pages/john-peters/TreeTab.tsx');
+    expect(s).toContain('hidden pb-16 lg:block');
+  });
+
+  it('the readable family tree is still shown on every screen size', () => {
+    const s = read('src/pages/john-peters/TreeTab.tsx');
+    const shared = s.indexOf('<FamilyTree');
+    const canvas = s.indexOf('hidden pb-16 lg:block');
+    expect(shared).toBeGreaterThan(-1);
+    expect(shared, 'shared tree must come before the desktop-only canvas').toBeLessThan(canvas);
+  });
+});

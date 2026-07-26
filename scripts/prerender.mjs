@@ -22,7 +22,31 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
-const SITE = process.env.SITE_URL ?? 'https://memoryglen.com';
+/**
+ * Base URL for canonical, og:url and og:image.
+ *
+ * This was hard-coded to https://memoryglen.com, which is WRONG on any other
+ * deployment: the preview and V4 sites then advertised absolute image URLs
+ * pointing at a different Vercel project, so WhatsApp fetched an image that is
+ * not there and showed a preview with no picture.
+ *
+ * Resolution order:
+ *   SITE_URL                        explicit override, set this for the real domain
+ *   VERCEL_PROJECT_PRODUCTION_URL   the project's stable production host
+ *   VERCEL_URL                      this specific deployment (previews)
+ *   localhost                       local builds
+ */
+function resolveSite() {
+  const explicit = process.env.SITE_URL;
+  if (explicit) return explicit.replace(/\/+$/, '');
+  const prod = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (prod) return `https://${prod.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
+  const deployment = process.env.VERCEL_URL;
+  if (deployment) return `https://${deployment.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
+  return 'http://localhost:5173';
+}
+
+const SITE = resolveSite();
 
 const esc = (s) =>
   String(s ?? '')
@@ -109,10 +133,15 @@ function withTags(html, page) {
     `<meta name="twitter:image" content="${esc(image)}" />`,
   ].join('\n    ');
 
-  // Replace the shell's title and description, then inject the rest.
+  // Idempotent: strip anything a previous run injected before injecting again,
+  // otherwise running prerender twice on the same dist duplicates every tag and
+  // crawlers see two conflicting canonicals.
   return html
     .replace(/<title>.*?<\/title>\s*/s, '')
-    .replace(/<meta\s+name="description"[^>]*>\s*/i, '')
+    .replace(/<meta\s+name="description"[^>]*>\s*/gi, '')
+    .replace(/<link\s+rel="canonical"[^>]*>\s*/gi, '')
+    .replace(/<meta\s+property="og:[^"]*"[^>]*>\s*/gi, '')
+    .replace(/<meta\s+name="twitter:[^"]*"[^>]*>\s*/gi, '')
     .replace('</head>', `  ${tags}\n  </head>`);
 }
 
@@ -132,6 +161,13 @@ function main() {
   }
 
   console.log(`[prerender] wrote ${pages.length} pages with Open Graph tags`);
+  console.log(`[prerender] base URL: ${SITE}`);
+  if (SITE.includes('localhost')) {
+    console.warn(
+      '[prerender] WARNING: no SITE_URL / VERCEL_URL found, so share links point at ' +
+        'localhost. Set SITE_URL in your Vercel environment variables.',
+    );
+  }
 }
 
 main();
