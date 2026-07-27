@@ -1,0 +1,171 @@
+From a505130247c19a645f64e8b7369394d68483645d Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.local>
+Date: Sun, 26 Jul 2026 06:04:02 +0000
+Subject: [PATCH] Fix Open Graph base URL, make prerender idempotent, and stop
+ the tree canvas trapping mobile scroll
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+1. BASE URL — my bug. scripts/prerender.mjs hard-coded
+   https://memoryglen.com, so every deployment advertised absolute
+   og:image, og:url and canonical URLs pointing at a DIFFERENT Vercel
+   project. WhatsApp fetched an image that is not there, which is why
+   previews showed no picture. Now resolved from the environment:
+   SITE_URL, then VERCEL_PROJECT_PRODUCTION_URL, then VERCEL_URL, then
+   localhost. The build prints the base URL it used and warns loudly if
+   it falls back to localhost.
+
+2. IDEMPOTENCE — found while testing the above. The script only stripped
+   <title> and description before injecting, so running it twice on the
+   same dist produced duplicate canonicals and og tags. It now strips any
+   previously injected canonical, og:* and twitter:* first. Verified by
+   running it three times: exactly one of each tag.
+
+3. MOBILE TREE — John's pan/zoom canvas is 560px tall and carries
+   , so on a phone a swipe pans the tree instead of scrolling
+   the page and the reader gets stuck against it. It is now hidden below
+   lg. The shared FamilyTree, which reads at 320px, remains on every
+   screen size and appears above it.
+
+Four new tests. 38 pass in total.
+
+NOT CHANGED, because they are already on main and deployed: the homepage
+hero, the Family Glen explainer and trust note, the shared family tree,
+and per-memorial Open Graph. Verified against the live site — the live
+homepage already serves the new hero copy in its meta description.
+---
+ scripts/prerender.mjs                 | 42 +++++++++++++++++++++++++--
+ src/__tests__/priority-brief.test.tsx | 29 ++++++++++++++++++
+ src/pages/john-peters/TreeTab.tsx     |  9 ++++--
+ 3 files changed, 75 insertions(+), 5 deletions(-)
+
+diff --git a/scripts/prerender.mjs b/scripts/prerender.mjs
+index af5dbc0..f250721 100644
+--- a/scripts/prerender.mjs
++++ b/scripts/prerender.mjs
+@@ -22,7 +22,31 @@ import { fileURLToPath } from 'node:url';
+ 
+ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+ const dist = join(root, 'dist');
+-const SITE = process.env.SITE_URL ?? 'https://memoryglen.com';
++/**
++ * Base URL for canonical, og:url and og:image.
++ *
++ * This was hard-coded to https://memoryglen.com, which is WRONG on any other
++ * deployment: the preview and V4 sites then advertised absolute image URLs
++ * pointing at a different Vercel project, so WhatsApp fetched an image that is
++ * not there and showed a preview with no picture.
++ *
++ * Resolution order:
++ *   SITE_URL                        explicit override, set this for the real domain
++ *   VERCEL_PROJECT_PRODUCTION_URL   the project's stable production host
++ *   VERCEL_URL                      this specific deployment (previews)
++ *   localhost                       local builds
++ */
++function resolveSite() {
++  const explicit = process.env.SITE_URL;
++  if (explicit) return explicit.replace(/\/+$/, '');
++  const prod = process.env.VERCEL_PROJECT_PRODUCTION_URL;
++  if (prod) return `https://${prod.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
++  const deployment = process.env.VERCEL_URL;
++  if (deployment) return `https://${deployment.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
++  return 'http://localhost:5173';
++}
++
++const SITE = resolveSite();
+ 
+ const esc = (s) =>
+   String(s ?? '')
+@@ -109,10 +133,15 @@ function withTags(html, page) {
+     `<meta name="twitter:image" content="${esc(image)}" />`,
+   ].join('\n    ');
+ 
+-  // Replace the shell's title and description, then inject the rest.
++  // Idempotent: strip anything a previous run injected before injecting again,
++  // otherwise running prerender twice on the same dist duplicates every tag and
++  // crawlers see two conflicting canonicals.
+   return html
+     .replace(/<title>.*?<\/title>\s*/s, '')
+-    .replace(/<meta\s+name="description"[^>]*>\s*/i, '')
++    .replace(/<meta\s+name="description"[^>]*>\s*/gi, '')
++    .replace(/<link\s+rel="canonical"[^>]*>\s*/gi, '')
++    .replace(/<meta\s+property="og:[^"]*"[^>]*>\s*/gi, '')
++    .replace(/<meta\s+name="twitter:[^"]*"[^>]*>\s*/gi, '')
+     .replace('</head>', `  ${tags}\n  </head>`);
+ }
+ 
+@@ -132,6 +161,13 @@ function main() {
+   }
+ 
+   console.log(`[prerender] wrote ${pages.length} pages with Open Graph tags`);
++  console.log(`[prerender] base URL: ${SITE}`);
++  if (SITE.includes('localhost')) {
++    console.warn(
++      '[prerender] WARNING: no SITE_URL / VERCEL_URL found, so share links point at ' +
++        'localhost. Set SITE_URL in your Vercel environment variables.',
++    );
++  }
+ }
+ 
+ main();
+diff --git a/src/__tests__/priority-brief.test.tsx b/src/__tests__/priority-brief.test.tsx
+index 41cbedc..72eda4b 100644
+--- a/src/__tests__/priority-brief.test.tsx
++++ b/src/__tests__/priority-brief.test.tsx
+@@ -144,3 +144,32 @@ describe('P4 Open Graph and sharing', () => {
+     expect(read('src/components/QRShareBlock.tsx')).toContain('wa.me');
+   });
+ });
++
++/* ---------------- follow-up fixes ---------------- */
++describe('follow-up: base URL and mobile tree', () => {
++  it('the prerender base URL comes from the environment, never hard-coded', () => {
++    const s = read('scripts/prerender.mjs');
++    expect(s).not.toMatch(/const SITE = .*'https:\/\/memoryglen\.com'/);
++    expect(s).toContain('VERCEL_PROJECT_PRODUCTION_URL');
++    expect(s).toContain('SITE_URL');
++  });
++
++  it('prerender is idempotent — running twice must not duplicate tags', () => {
++    const s = read('scripts/prerender.mjs');
++    expect(s).toContain('rel="canonical"[^>]*>\\s*/gi');
++    expect(s).toContain('property="og:[^"]*"[^>]*>\\s*/gi');
++  });
++
++  it("John's pan/zoom canvas does not swallow touch scrolling on a phone", () => {
++    const s = read('src/pages/john-peters/TreeTab.tsx');
++    expect(s).toContain('hidden pb-16 lg:block');
++  });
++
++  it('the readable family tree is still shown on every screen size', () => {
++    const s = read('src/pages/john-peters/TreeTab.tsx');
++    const shared = s.indexOf('<FamilyTree');
++    const canvas = s.indexOf('hidden pb-16 lg:block');
++    expect(shared).toBeGreaterThan(-1);
++    expect(shared, 'shared tree must come before the desktop-only canvas').toBeLessThan(canvas);
++  });
++});
+diff --git a/src/pages/john-peters/TreeTab.tsx b/src/pages/john-peters/TreeTab.tsx
+index b03b21c..144d421 100644
+--- a/src/pages/john-peters/TreeTab.tsx
++++ b/src/pages/john-peters/TreeTab.tsx
+@@ -835,8 +835,13 @@ export default function TreeTab() {
+         </Reveal>
+       </section>
+ 
+-      {/* Section 2 — Tree canvas */}
+-      <section className="pb-16" aria-label="The Peters family tree">
++      {/* Section 2 — Tree canvas, DESKTOP ONLY.
++          The canvas is a 560px-tall pan/zoom surface with `touch-none`, which
++          swallows swipe events. On a phone that means a swipe pans the tree
++          instead of scrolling the page, and the reader gets stuck against it.
++          The shared FamilyTree above already presents the whole family in a
++          form that reads at 320px, so the canvas is a large-screen extra. */}
++      <section className="hidden pb-16 lg:block" aria-label="The Peters family tree">
+         <Reveal>
+           <TreeCanvas linkConfirmed={linkConfirmed} onSelect={setSelected} selected={selected} />
+         </Reveal>
+-- 
+2.43.0
+

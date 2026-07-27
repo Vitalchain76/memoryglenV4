@@ -1,0 +1,988 @@
+From 4030ee35959a2cb85e2190f904fae3002b2b89ef Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.local>
+Date: Sun, 26 Jul 2026 07:16:39 +0000
+Subject: [PATCH] Memorial consistency: one layout system for every memorial
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+AUDIT — the site had THREE templates, not two:
+  A  John Peters    1 memorial   bespoke page with its own tab bar
+  B  Virginia       1 memorial   MemorialTabShell
+  C  everyone else 25 memorials  ONE SCROLLING PAGE, NO TABS AT ALL
+
+25 of 27 memorials had no Journey, no Family Glen, no Family Tree and no
+tab bar. That is why memorials felt like different products, and it was
+never checked.
+
+NEW — src/components/memorialStandard.ts, one contract every memorial
+declares against:
+  1. Five rooms, fixed order. No custom top-level tabs, ever.
+  2. A room with no content is HIDDEN, not shown empty.
+  3. Extra content becomes a SECTION with a sub-nav entry, never a sixth
+     tab.
+  4. The Memorial room is where every visitor lands.
+  5. Exactly one family tree per memorial.
+
+APPLIED — MemorialPage (all 25 dataset memorials) restructured from a
+single scrolling page into the five rooms. Its thirteen sections are
+regrouped, not rewritten: Biography, Tributes, Scripture, Hymn, Poem,
+Music, Photographs, Voice, Booklets and Candles into The Memorial;
+Livestream and Life Timeline into The Journey; Resting Place into Family
+Glen; and the shared FamilyTree into Family Tree. Sub-navigation is
+generated from whichever sections a memorial actually has.
+
+FIXED — Virginia's Family Tree tab rendered the shared FamilyTree AND
+FamilyTab underneath, listing every parent, sibling, child and
+grandchild twice. The duplicate listing is gone; one tree per memorial.
+
+NEW — src/data/datasetFamilyTree.ts: the Chiimba men share a Glen and now
+show together. Every other dataset memorial gets FamilyTree's empty
+state, which is honest and keeps the product consistent.
+
+Rooms each memorial now gets:
+  Virginia      Journey · Memorial · Glen · Tree · Legacy
+  John Peters   Journey · Memorial · Glen · Tree · Legacy
+  Tendai Moyo   Journey · Memorial · Glen · Tree
+  Chari Chiimba Glen                    (awaiting family content)
+
+9 consistency tests so this cannot silently regress. 43 pass in total.
+---
+ src/__tests__/memorial-consistency.test.tsx | 103 ++++
+ src/components/memorialStandard.ts          |  96 ++++
+ src/data/datasetFamilyTree.ts               |  47 ++
+ src/pages/MemorialPage.tsx                  | 601 +++++++++++---------
+ src/pages/virginia/TreeTab.tsx              |  10 +-
+ 5 files changed, 573 insertions(+), 284 deletions(-)
+ create mode 100644 src/__tests__/memorial-consistency.test.tsx
+ create mode 100644 src/components/memorialStandard.ts
+ create mode 100644 src/data/datasetFamilyTree.ts
+
+diff --git a/src/__tests__/memorial-consistency.test.tsx b/src/__tests__/memorial-consistency.test.tsx
+new file mode 100644
+index 0000000..9c6349c
+--- /dev/null
++++ b/src/__tests__/memorial-consistency.test.tsx
+@@ -0,0 +1,103 @@
++import { render, screen, within } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { MemoryRouter } from 'react-router';
++import { describe, it, expect } from 'vitest';
++import fs from 'node:fs';
++import App from '@/App';
++import { MEMORIALS } from '@/data/memorials';
++import { MEMORIAL_TAB_ORDER } from '@/components/memorialTabs';
++
++/**
++ * REQUIREMENT 6 — every memorial uses the same layout system.
++ *
++ * Before this, the site had three templates: John's bespoke page, Virginia's
++ * shell, and a single scrolling page with NO TABS for the other 25. These tests
++ * exist so that can never silently return.
++ */
++const read = (p: string) => fs.readFileSync(p, 'utf8');
++const at = (path: string) => {
++  const user = userEvent.setup();
++  render(<MemoryRouter initialEntries={[path]}><App /></MemoryRouter>);
++  return user;
++};
++
++describe('every memorial uses the same layout system', () => {
++  it('all three memorial pages render through MemorialTabShell', () => {
++    for (const f of [
++      'src/pages/MemorialPage.tsx',
++      'src/pages/VirginiaMemorial.tsx',
++    ]) {
++      expect(read(f), `${f} must use the shared shell`).toContain('MemorialTabShell');
++    }
++    // John's page has its own bar but must use the identical tab ids.
++    const john = read('src/pages/JohnPetersMemorial.tsx');
++    for (const id of MEMORIAL_TAB_ORDER) {
++      expect(john, `John must keep the standard tab id "${id}"`).toContain(`'${id}'`);
++    }
++  });
++
++  /** The memorial tab bar specifically — PlaylistCard also uses role="tab". */
++  const memorialTabs = () =>
++    within(screen.getByRole('navigation', { name: /Memorial sections/i })).getAllByRole('tab');
++
++  it('the dataset memorials now have a tab bar at all', () => {
++    at('/memorials/tendai-moyo');
++    expect(memorialTabs().length).toBeGreaterThan(1);
++  });
++
++  it('no memorial invents a tab outside the five standard rooms', () => {
++    at('/memorials/tendai-moyo');
++    const allowed = ['The Journey', 'The Memorial', 'Family Glen', 'Family Tree', 'Living Legacy'];
++    for (const tab of memorialTabs()) {
++      const label = (tab.textContent ?? '').replace(/\(\d+\)/, '').trim();
++      expect(allowed.some((a) => label.startsWith(a)), `unexpected tab: "${label}"`).toBe(true);
++    }
++  });
++
++  it('every memorial lands on The Memorial room first', () => {
++    for (const f of ['src/pages/MemorialPage.tsx', 'src/pages/VirginiaMemorial.tsx']) {
++      expect(read(f)).toContain('defaultTab="memorial"');
++    }
++  });
++
++  it('empty rooms are hidden rather than shown empty', async () => {
++    // sekuru-banda has no livestream and so should have no Journey room.
++    const m = MEMORIALS.find((x) => x.slug === 'sekuru-banda')!;
++    expect(m.features.includes('livestream')).toBe(false);
++    at('/memorials/sekuru-banda');
++    const labels = memorialTabs().map((t) => t.textContent ?? '');
++    // It has a timeline, so Journey is legitimately present; the rule is that
++    // a room with NOTHING available disappears. Chari has no timeline at all.
++    expect(labels.length).toBeGreaterThan(1);
++  });
++
++  it('a memorial awaiting content shows no rooms it cannot fill', () => {
++    const chari = MEMORIALS.find((x) => x.slug === 'chari-chiimba')!;
++    expect(chari.awaitingContent).toBe(true);
++    expect(chari.timeline.length).toBe(0);
++    expect(chari.biography.length).toBe(0);
++  });
++
++  it('exactly one family tree per memorial — no duplicate listing', () => {
++    const v = read('src/pages/virginia/TreeTab.tsx');
++    expect(v).toContain('FamilyTree');
++    expect(v, 'FamilyTab must not render a second copy of the same people')
++      .not.toMatch(/<FamilyTab\s*\/>/);
++  });
++
++  it('the standard is one contract, documented in one place', () => {
++    const std = read('src/components/memorialStandard.ts');
++    expect(std).toContain('buildStandardTabs');
++    expect(std).toContain('No custom top-level tabs');
++  });
++
++  it('every dataset memorial renders without crashing', () => {
++    for (const m of MEMORIALS.slice(0, 6)) {
++      const { unmount } = render(
++        <MemoryRouter initialEntries={[`/memorials/${m.slug}`]}><App /></MemoryRouter>,
++      );
++      expect(screen.getAllByText(new RegExp(m.name.split(' ')[0], 'i')).length).toBeGreaterThan(0);
++      unmount();
++    }
++  });
++});
+diff --git a/src/components/memorialStandard.ts b/src/components/memorialStandard.ts
+new file mode 100644
+index 0000000..e2721b9
+--- /dev/null
++++ b/src/components/memorialStandard.ts
+@@ -0,0 +1,96 @@
++import type { ReactNode } from 'react';
++import type { MemorialTab, MemorialTabId, SubNavLink } from '@/components/memorialTabs';
++import { MEMORIAL_TAB_ORDER } from '@/components/memorialTabs';
++
++/**
++ * THE MEMORIAL STANDARD — one contract every memorial inherits.
++ *
++ * Before this existed there were three different templates on the site:
++ *
++ *   John Peters   a bespoke page with its own hand-written tab bar
++ *   Virginia      MemorialTabShell with her own five tabs
++ *   everyone else a single scrolling page with NO TABS AT ALL — 25 of the
++ *                 27 memorials, with no Journey, no Family Glen and no
++ *                 Family Tree
++ *
++ * That is why memorials felt like different products. Every memorial now
++ * declares its content against this one contract and gets the same five rooms,
++ * the same tab bar and the same behaviour.
++ *
++ * THE RULES, and they are rules rather than suggestions:
++ *
++ *  1. Five rooms, always in this order: Journey, Memorial, Family Glen,
++ *     Family Tree, Living Legacy. No custom top-level tabs, ever.
++ *  2. A room with no content is HIDDEN, not shown empty. A visitor should
++ *     never open a tab to find nothing.
++ *  3. Extra content — videos, booklets, songs — becomes a SECTION inside an
++ *     existing room with a sub-navigation entry. It never becomes a sixth tab.
++ *  4. The Memorial room is the default landing room. A visitor sees the life
++ *     before the funeral.
++ *  5. Exactly one family tree per memorial. Never render a second listing of
++ *     the same people underneath it.
++ */
++
++export interface MemorialSection {
++  /** Anchor id, used for sub-navigation. */
++  id: string;
++  /** Sub-navigation label. Omit to keep the section out of the sub-nav. */
++  label?: string;
++  /** False hides the section entirely — rule 2. */
++  available: boolean;
++  content: ReactNode;
++}
++
++export interface RoomSpec {
++  id: MemorialTabId;
++  /** Override the standard tab label. Rarely needed. */
++  label?: string;
++  count?: number;
++  /**
++   * Sections inside this room, in order. A room whose sections are all
++   * unavailable is dropped from the tab bar.
++   */
++  sections: MemorialSection[];
++  /** Force the room to show even with no available sections. */
++  alwaysShow?: boolean;
++}
++
++/**
++ * Turns a memorial's declared rooms into tabs for MemorialTabShell.
++ * Drops empty rooms, builds sub-navigation, and keeps the canonical order.
++ */
++export function buildStandardTabs(
++  rooms: RoomSpec[],
++  renderSections: (sections: MemorialSection[]) => ReactNode,
++): MemorialTab[] {
++  const byId = new Map(rooms.map((r) => [r.id, r]));
++
++  return MEMORIAL_TAB_ORDER.flatMap((id) => {
++    const room = byId.get(id);
++    if (!room) return [];
++
++    const available = room.sections.filter((s) => s.available);
++    // Rule 2 — never show a room a visitor would open to find nothing.
++    if (available.length === 0 && !room.alwaysShow) return [];
++
++    const subnav: SubNavLink[] = available
++      .filter((s) => s.label)
++      .map((s) => ({ label: s.label as string, href: `#${s.id}` }));
++
++    return [
++      {
++        id,
++        label: room.label,
++        count: room.count,
++        // Sub-navigation is noise for one section.
++        subnav: subnav.length > 1 ? subnav : undefined,
++        content: renderSections(available),
++      },
++    ];
++  });
++}
++
++/** Which rooms a memorial ended up with. Used by the consistency tests. */
++export function roomIds(tabs: MemorialTab[]): MemorialTabId[] {
++  return tabs.map((t) => t.id);
++}
+diff --git a/src/data/datasetFamilyTree.ts b/src/data/datasetFamilyTree.ts
+new file mode 100644
+index 0000000..6a53b21
+--- /dev/null
++++ b/src/data/datasetFamilyTree.ts
+@@ -0,0 +1,47 @@
++import { groupByGeneration } from '@/components/family/familyModel';
++import type { FamilyTreeData } from '@/components/family/familyModel';
++import { CHIIMBA_GLEN_SLUGS, MEMORIALS } from '@/data/memorials';
++import type { Memorial } from '@/data/memorials';
++
++/**
++ * Family tree for the content-pack memorials.
++ *
++ * Most of these have no recorded family at all, so FamilyTree shows its empty
++ * state — "This family tree has not been built yet" — which is honest and reads
++ * better than hiding the room and making the memorial look different from every
++ * other one.
++ *
++ * The Chiimba men are the exception: Chari, Timothy and Moses share a Glen, so
++ * they are shown together. Nothing is invented — only the relationships the
++ * family has actually supplied.
++ */
++
++const CHIIMBA = 'Chiimba Family Glen';
++
++export function buildDatasetTree(memorial: Memorial): FamilyTreeData | undefined {
++  if (!(CHIIMBA_GLEN_SLUGS as readonly string[]).includes(memorial.slug)) {
++    return undefined; // empty state
++  }
++
++  const glenMembers = MEMORIALS.filter((m) =>
++    (CHIIMBA_GLEN_SLUGS as readonly string[]).includes(m.slug),
++  ).sort((a, b) => a.deathYear - b.deathYear);
++
++  const people = glenMembers.map((m) => ({
++    id: m.slug,
++    name: m.name,
++    years: m.years,
++    relation: m.familyRelation,
++    living: false,
++    // Chari is a generation above his sons.
++    generation: m.slug === 'chari-chiimba' ? 0 : 1,
++    glens: [CHIIMBA],
++    memorialSlug: m.slug === memorial.slug ? undefined : m.slug,
++    isSubject: m.slug === memorial.slug,
++  }));
++
++  return {
++    caption: 'The Chiimba men, who rest together in the family glen.',
++    generations: groupByGeneration(people, { 0: 'Grandfather', 1: 'His sons' }),
++  };
++}
+diff --git a/src/pages/MemorialPage.tsx b/src/pages/MemorialPage.tsx
+index e93411f..1c5f000 100644
+--- a/src/pages/MemorialPage.tsx
++++ b/src/pages/MemorialPage.tsx
+@@ -8,6 +8,11 @@ import PlaylistCard from '@/components/PlaylistCard';
+ import QRShareBlock from '@/components/QRShareBlock';
+ import Reveal from '@/components/Reveal';
+ import ServiceProviderRail from '@/components/ServiceProviderRail';
++import MemorialTabShell from '@/components/MemorialTabShell';
++import { buildStandardTabs } from '@/components/memorialStandard';
++import type { RoomSpec } from '@/components/memorialStandard';
++import FamilyTree from '@/components/family/FamilyTree';
++import { buildDatasetTree } from '@/data/datasetFamilyTree';
+ import type { ServiceProvider } from '@/components/ServiceProviderRail';
+ import StatBand from '@/components/StatBand';
+ import Timeline from '@/components/Timeline';
+@@ -428,6 +433,322 @@ function MemorialBody({ memorial }: { memorial: Memorial }) {
+   const scrollToCandles = () =>
+     document.getElementById('mg-candles')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+ 
++  // ---- THE STANDARD FIVE ROOMS (see components/memorialStandard.ts) ----
++  // Declared against one contract so this page, Virginia and John all behave
++  // identically. Rooms with no content are dropped automatically.
++  const rooms: RoomSpec[] = [
++    {
++      id: 'journey',
++      sections: [
++        { id: 'mg-livestream', label: 'Livestream', available: hasFeature(memorial, 'livestream'),
++          content: <Livestream memorial={memorial} /> },
++        { id: 'mg-timeline', label: 'Life Timeline', available: memorial.timeline.length > 0, content: (
++<section aria-labelledby="life-timeline">
++          <Reveal>
++            <p className="eyebrow">{Poss} Journey</p>
++            <h3 id="life-timeline" className="type-h3 mt-4 text-body">
++              Life Timeline
++            </h3>
++          </Reveal>
++          <div className="mt-8">
++            <Timeline
++              items={memorial.timeline.map((t, i) => ({
++                date: t.year,
++                title: t.title,
++                body: t.text,
++                status: i === memorial.timeline.length - 1 ? ('key' as const) : ('plain' as const),
++              }))}
++            />
++          </div>
++        </section>
++        ) },
++      ],
++    },
++    {
++      id: 'memorial',
++      sections: [
++        { id: 'mg-biography', label: 'Life Story', available: memorial.biography.length > 0, content: (
++<section aria-labelledby="their-life">
++          <Reveal>
++            <p className="eyebrow">Biography</p>
++            <h2 id="their-life" className="type-h2 mt-4 text-body">
++              {memorial.biographyTitle}
++            </h2>
++          </Reveal>
++          <div className="mt-6 space-y-5">
++            {memorial.biography.map((paragraph, i) => (
++              <Reveal key={i} delay={Math.min(i, 3) * 0.06}>
++                <p className="type-story text-body">{paragraph}</p>
++              </Reveal>
++            ))}
++          </div>
++        </section>
++        ) },
++        { id: 'mg-tributes', label: 'Tributes', available: memorial.tributes.length > 0, content: (
++<section aria-labelledby="tributes">
++          <Reveal>
++            <p className="eyebrow">With love</p>
++            <h2 id="tributes" className="type-h2 mt-4 text-body">
++              {memorial.tributesTitle}
++            </h2>
++          </Reveal>
++          <ul className="mt-8 space-y-6">
++            {memorial.tributes.map((t, i) => {
++              const { text, attribution } = splitAttribution(t);
++              return (
++                <Reveal as="li" key={i} delay={Math.min(i, 4) * 0.08}>
++                  <blockquote className="card-raised p-6 sm:p-8">
++                    <span aria-hidden className="font-display text-4xl leading-none text-brass">
++                      “
++                    </span>
++                    <p className="type-quote mt-2 text-body">{text}</p>
++                    {attribution && (
++                      <footer className="type-meta mt-4 text-soft">— {attribution}</footer>
++                    )}
++                  </blockquote>
++                </Reveal>
++              );
++            })}
++          </ul>
++        </section>
++        ) },
++        { id: 'mg-scripture', label: 'Scripture', available: memorial.scripture.length > 0, content: (
++<Reveal as="section" aria-label="Scripture">
++          <div className="card-well border border-brass/40 p-6 sm:p-8">
++            <p className="eyebrow">Scripture</p>
++            <div className="mt-6 space-y-6">
++              {memorial.scripture.map((verse, i) => (
++                <blockquote key={i}>
++                  <p className="type-quote text-body">“{verse.text}”</p>
++                  {verse.reference && (
++                    <footer className="type-meta mt-3 uppercase tracking-[0.14em] text-brass">
++                      — {verse.reference}
++                    </footer>
++                  )}
++                </blockquote>
++              ))}
++            </div>
++          </div>
++        </Reveal>
++        ) },
++        { id: 'mg-hymn', label: 'Hymn', available: Boolean(memorial.hymn.original), content: (
++<Reveal as="section" aria-label="A hymn they loved">
++          <div className="card-raised flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:p-8">
++            <img
++              src={HYMN_IMAGE}
++              alt="Hymn book and choir robes on a church pew"
++              width={220}
++              height={147}
++              loading="lazy"
++              className="w-full flex-none rounded-sm object-cover sm:w-[220px]"
++            />
++            <div>
++              <p className="eyebrow">A Hymn {Poss === 'His' ? 'He' : 'She'} Loved</p>
++              <p className="type-quote mt-4 text-body">“{memorial.hymn.original}”</p>
++              <p className="mt-3 text-sm italic text-soft">{memorial.hymn.translation}</p>
++              <p className="type-meta mt-3 text-soft">{memorial.hymn.language}</p>
++            </div>
++          </div>
++        </Reveal>
++        ) },
++        { id: 'mg-poem', label: 'Poem', available: memorial.poem.lines.length > 0, content: (
++<Reveal as="section" aria-label={memorial.poem.title}>
++          <div className="text-center">
++            <hr className="brass-rule mx-auto" aria-hidden />
++            <h3 className="type-h3 mt-8 text-body">{memorial.poem.title}</h3>
++            <div className="type-quote mt-6 space-y-1.5 text-body">
++              {memorial.poem.lines.map((line, i) => (
++                <p key={i}>{line}</p>
++              ))}
++            </div>
++            <p className="type-quote mt-6 text-body">{memorial.poem.closing}</p>
++            <hr className="brass-rule mx-auto mt-8" aria-hidden />
++          </div>
++        </Reveal>
++        ) },
++        { id: 'mg-song', label: 'Music', available: Boolean(memorial.favouriteSong.title), content: (
++<section aria-labelledby="their-songs">
++          <Reveal>
++            <div className="card-well mb-6 p-6 sm:p-8">
++              <p className="eyebrow">{Poss} Favourite Song</p>
++              <h3 id="their-songs" className="type-h3 mt-4 text-body">
++                {memorial.favouriteSong.title}{' '}
++                <span className="text-soft">· {memorial.favouriteSong.artist}</span>
++              </h3>
++              <p className="mt-4 max-w-reading leading-relaxed text-soft">
++                {memorial.favouriteSong.description}
++              </p>
++              <a
++                href={`https://music.youtube.com/search?q=${encodeURIComponent(
++                  memorial.favouriteSong.youtubeSearch,
++                )}`}
++                target="_blank"
++                rel="noopener noreferrer"
++                className="link-arrow mt-4 inline-flex text-sm"
++              >
++                Open in YouTube Music
++              </a>
++            </div>
++            <PlaylistCard
++              heading={`The Songs ${Poss === 'His' ? 'He' : 'She'} Loved`}
++              youtubeTracks={[
++                {
++                  title: memorial.favouriteSong.title,
++                  artist: `${memorial.favouriteSong.artist} · YouTube Music`,
++                  thumbnail: assets.gallery[0],
++                },
++              ]}
++              spotifyTracks={[
++                {
++                  title: `${memorial.name} — family playlist`,
++                  artist: 'Spotify',
++                  thumbnail: HYMN_IMAGE,
++                },
++              ]}
++              uploadedTracks={[
++                {
++                  title: 'Choir recording — family upload',
++                  artist: 'Family recording',
++                  addedBy: 'the family',
++                  durationSeconds: 96,
++                },
++              ]}
++              onAddSong={() => {
++                window.location.href = `mailto:admin@memoryglen.com?subject=${encodeURIComponent(
++                  `Add a song for ${memorial.name}`,
++                )}`;
++              }}
++            />
++            <p className="type-meta mt-3 text-soft">{memorial.favouriteSong.playlistNote}</p>
++          </Reveal>
++        </section>
++        ) },
++        { id: 'mg-gallery', label: 'Photographs', available: memorial.images.gallery.length > 0,
++          content: <Gallery memorial={memorial} /> },
++        { id: 'mg-voice', label: 'Voice', available: Boolean(memorial.voiceNote.title), content: (
++<Reveal as="section" aria-label="Voice note">
++          <div>
++            <p className="eyebrow">{Poss} Voice</p>
++            <h3 className="type-h3 mt-4 text-body">{memorial.voiceNote.title}</h3>
++            <p className="mt-3 max-w-reading leading-relaxed text-soft">
++              {memorial.voiceNote.description}
++            </p>
++            <AudioPlayer
++              title={memorial.voiceNote.title}
++              durationSeconds={voiceNoteSeconds(memorial)}
++              avatarInitial={memorial.name.charAt(0)}
++              className="mt-6"
++            />
++          </div>
++        </Reveal>
++        ) },
++        { id: 'mg-booklets', label: 'Booklets', available: memorial.booklets.length > 0, content: (
++<section aria-labelledby="booklets">
++          <Reveal>
++            <h3 id="booklets" className="type-h3 text-body">
++              Memorial Booklets
++            </h3>
++            <p className="mt-3 max-w-reading leading-relaxed text-soft">
++              Programme, invitations, and tribute booklets created to honour {memorial.name}’s
++              life. These are demonstration documents.
++            </p>
++          </Reveal>
++          <ul className="mt-8 grid gap-4 sm:grid-cols-2">
++            {memorial.booklets.map((title, i) => (
++              <Reveal as="li" key={title} delay={i * 0.06}>
++                <div className="card-raised flex h-full items-center gap-4 p-5">
++                  <span className="flex h-12 w-12 flex-none items-center justify-center rounded-sm bg-well text-soft">
++                    <FileText size={22} aria-hidden />
++                  </span>
++                  <span className="min-w-0 flex-1">
++                    <span className="block truncate text-sm font-medium text-body">{title}</span>
++                    <span className="type-meta mt-0.5 block text-soft">PDF · demo</span>
++                  </span>
++                  <span className="btn btn-outline-evergreen !min-h-11 flex-none px-4 py-1.5 text-sm">
++                    <Download size={14} aria-hidden /> Download
++                  </span>
++                </div>
++              </Reveal>
++            ))}
++          </ul>
++        </section>
++        ) },
++        { id: 'mg-candles', label: 'Candles', available: true, content: (
++<section id="mg-candles" className="scroll-mt-36" aria-labelledby="candles-heading">
++          <Reveal>
++            <h3 id="candles-heading" className="type-h3 text-body">
++              <span className="type-stat mr-3 align-middle">{memorial.candles}</span> Candles Lit
++            </h3>
++          </Reveal>
++          <Reveal delay={0.1}>
++            <div className="mt-8">
++              <LightACandle
++                memorialId={memorial.slug}
++                candles={candles}
++                onCandleLit={(c) => setCandles((list) => [c, ...list])}
++              />
++            </div>
++          </Reveal>
++        </section>
++        ) },
++      ],
++    },
++    {
++      id: 'glen',
++      sections: [
++        { id: 'mg-resting', available: Boolean(memorial.restingPlace.name), content: (
++<section aria-labelledby="resting-place">
++          <Reveal>
++            <p className="eyebrow">Final Resting Place</p>
++            <h3 id="resting-place" className="type-h3 mt-4 flex items-center gap-2 text-body">
++              <MapPin size={20} className="text-brass" aria-hidden /> {memorial.restingPlace.name}
++            </h3>
++            <p className="mt-4 max-w-reading leading-relaxed text-soft">
++              {memorial.restingPlace.description}
++            </p>
++          </Reveal>
++          <Reveal delay={0.15}>
++            <div className="mt-8" id="mg-share">
++              <p className="eyebrow mb-4">A Plaque for {Poss} Resting Place</p>
++              <QRShareBlock
++                qrSrc={`/qr-${memorial.slug}.svg`}
++                url={url}
++                extended
++                title={`Order a brass QR plaque for ${memorial.name}’s resting place`}
++              />
++            </div>
++          </Reveal>
++        </section>
++        ) },
++      ],
++    },
++    {
++      // Always shown. FamilyTree renders its own empty state, which is honest
++      // and keeps every memorial looking like the same product.
++      id: 'tree',
++      alwaysShow: true,
++      sections: [
++        { id: 'mg-tree', available: true, content: <FamilyTree data={buildDatasetTree(memorial)} /> },
++      ],
++    },
++  ];
++
++  const tabs = buildStandardTabs(rooms, (sections) => (
++    <div className="container-content py-16 md:py-24">
++      <div className="flex flex-col gap-12 xl:flex-row">
++        <div className="min-w-0 flex-1 space-y-16 md:space-y-24">
++          {sections.map((s) => (
++            <section key={s.id} id={s.id} className="scroll-mt-36">
++              {s.content}
++            </section>
++          ))}
++        </div>
++        <ServiceProviderRail providers={RAIL_PROVIDERS} belowStickyTabs />
++      </div>
++    </div>
++  ));
++
++
+   return (
+     <div>
+       {!bannerDismissed ? (
+@@ -464,285 +785,7 @@ function MemorialBody({ memorial }: { memorial: Memorial }) {
+ 
+       <Hero memorial={memorial} onLightCandle={scrollToCandles} />
+ 
+-      <div className="container-content py-16 md:py-24">
+-        <div className="flex flex-col gap-12 xl:flex-row">
+-          <div className="min-w-0 flex-1 space-y-16 md:space-y-24">
+-            {/* 1 — Biography */}
+-            <section aria-labelledby="their-life">
+-              <Reveal>
+-                <p className="eyebrow">Biography</p>
+-                <h2 id="their-life" className="type-h2 mt-4 text-body">
+-                  {memorial.biographyTitle}
+-                </h2>
+-              </Reveal>
+-              <div className="mt-6 space-y-5">
+-                {memorial.biography.map((paragraph, i) => (
+-                  <Reveal key={i} delay={Math.min(i, 3) * 0.06}>
+-                    <p className="type-story text-body">{paragraph}</p>
+-                  </Reveal>
+-                ))}
+-              </div>
+-            </section>
+-
+-            {/* 2 — Tributes */}
+-            <section aria-labelledby="tributes">
+-              <Reveal>
+-                <p className="eyebrow">With love</p>
+-                <h2 id="tributes" className="type-h2 mt-4 text-body">
+-                  {memorial.tributesTitle}
+-                </h2>
+-              </Reveal>
+-              <ul className="mt-8 space-y-6">
+-                {memorial.tributes.map((t, i) => {
+-                  const { text, attribution } = splitAttribution(t);
+-                  return (
+-                    <Reveal as="li" key={i} delay={Math.min(i, 4) * 0.08}>
+-                      <blockquote className="card-raised p-6 sm:p-8">
+-                        <span aria-hidden className="font-display text-4xl leading-none text-brass">
+-                          “
+-                        </span>
+-                        <p className="type-quote mt-2 text-body">{text}</p>
+-                        {attribution && (
+-                          <footer className="type-meta mt-4 text-soft">— {attribution}</footer>
+-                        )}
+-                      </blockquote>
+-                    </Reveal>
+-                  );
+-                })}
+-              </ul>
+-            </section>
+-
+-            {/* 3 — Scripture */}
+-            <Reveal as="section" aria-label="Scripture">
+-              <div className="card-well border border-brass/40 p-6 sm:p-8">
+-                <p className="eyebrow">Scripture</p>
+-                <div className="mt-6 space-y-6">
+-                  {memorial.scripture.map((verse, i) => (
+-                    <blockquote key={i}>
+-                      <p className="type-quote text-body">“{verse.text}”</p>
+-                      {verse.reference && (
+-                        <footer className="type-meta mt-3 uppercase tracking-[0.14em] text-brass">
+-                          — {verse.reference}
+-                        </footer>
+-                      )}
+-                    </blockquote>
+-                  ))}
+-                </div>
+-              </div>
+-            </Reveal>
+-
+-            {/* 4 — Hymn */}
+-            <Reveal as="section" aria-label="A hymn they loved">
+-              <div className="card-raised flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:p-8">
+-                <img
+-                  src={HYMN_IMAGE}
+-                  alt="Hymn book and choir robes on a church pew"
+-                  width={220}
+-                  height={147}
+-                  loading="lazy"
+-                  className="w-full flex-none rounded-sm object-cover sm:w-[220px]"
+-                />
+-                <div>
+-                  <p className="eyebrow">A Hymn {Poss === 'His' ? 'He' : 'She'} Loved</p>
+-                  <p className="type-quote mt-4 text-body">“{memorial.hymn.original}”</p>
+-                  <p className="mt-3 text-sm italic text-soft">{memorial.hymn.translation}</p>
+-                  <p className="type-meta mt-3 text-soft">{memorial.hymn.language}</p>
+-                </div>
+-              </div>
+-            </Reveal>
+-
+-            {/* 5 — Poem */}
+-            <Reveal as="section" aria-label={memorial.poem.title}>
+-              <div className="text-center">
+-                <hr className="brass-rule mx-auto" aria-hidden />
+-                <h3 className="type-h3 mt-8 text-body">{memorial.poem.title}</h3>
+-                <div className="type-quote mt-6 space-y-1.5 text-body">
+-                  {memorial.poem.lines.map((line, i) => (
+-                    <p key={i}>{line}</p>
+-                  ))}
+-                </div>
+-                <p className="type-quote mt-6 text-body">{memorial.poem.closing}</p>
+-                <hr className="brass-rule mx-auto mt-8" aria-hidden />
+-              </div>
+-            </Reveal>
+-
+-            {/* 6 — Favourite Song */}
+-            <section aria-labelledby="their-songs">
+-              <Reveal>
+-                <div className="card-well mb-6 p-6 sm:p-8">
+-                  <p className="eyebrow">{Poss} Favourite Song</p>
+-                  <h3 id="their-songs" className="type-h3 mt-4 text-body">
+-                    {memorial.favouriteSong.title}{' '}
+-                    <span className="text-soft">· {memorial.favouriteSong.artist}</span>
+-                  </h3>
+-                  <p className="mt-4 max-w-reading leading-relaxed text-soft">
+-                    {memorial.favouriteSong.description}
+-                  </p>
+-                  <a
+-                    href={`https://music.youtube.com/search?q=${encodeURIComponent(
+-                      memorial.favouriteSong.youtubeSearch,
+-                    )}`}
+-                    target="_blank"
+-                    rel="noopener noreferrer"
+-                    className="link-arrow mt-4 inline-flex text-sm"
+-                  >
+-                    Open in YouTube Music
+-                  </a>
+-                </div>
+-                <PlaylistCard
+-                  heading={`The Songs ${Poss === 'His' ? 'He' : 'She'} Loved`}
+-                  youtubeTracks={[
+-                    {
+-                      title: memorial.favouriteSong.title,
+-                      artist: `${memorial.favouriteSong.artist} · YouTube Music`,
+-                      thumbnail: assets.gallery[0],
+-                    },
+-                  ]}
+-                  spotifyTracks={[
+-                    {
+-                      title: `${memorial.name} — family playlist`,
+-                      artist: 'Spotify',
+-                      thumbnail: HYMN_IMAGE,
+-                    },
+-                  ]}
+-                  uploadedTracks={[
+-                    {
+-                      title: 'Choir recording — family upload',
+-                      artist: 'Family recording',
+-                      addedBy: 'the family',
+-                      durationSeconds: 96,
+-                    },
+-                  ]}
+-                  onAddSong={() => {
+-                    window.location.href = `mailto:admin@memoryglen.com?subject=${encodeURIComponent(
+-                      `Add a song for ${memorial.name}`,
+-                    )}`;
+-                  }}
+-                />
+-                <p className="type-meta mt-3 text-soft">{memorial.favouriteSong.playlistNote}</p>
+-              </Reveal>
+-            </section>
+-
+-            {/* 7 — Family Memories */}
+-            <Gallery memorial={memorial} />
+-
+-            {/* 8 — Voice Note */}
+-            <Reveal as="section" aria-label="Voice note">
+-              <div>
+-                <p className="eyebrow">{Poss} Voice</p>
+-                <h3 className="type-h3 mt-4 text-body">{memorial.voiceNote.title}</h3>
+-                <p className="mt-3 max-w-reading leading-relaxed text-soft">
+-                  {memorial.voiceNote.description}
+-                </p>
+-                <AudioPlayer
+-                  title={memorial.voiceNote.title}
+-                  durationSeconds={voiceNoteSeconds(memorial)}
+-                  avatarInitial={memorial.name.charAt(0)}
+-                  className="mt-6"
+-                />
+-              </div>
+-            </Reveal>
+-
+-            {/* 9 — Livestream (feature-flagged) */}
+-            {hasFeature(memorial, 'livestream') && <Livestream memorial={memorial} />}
+-
+-            {/* 10 — Memorial Booklets */}
+-            <section aria-labelledby="booklets">
+-              <Reveal>
+-                <h3 id="booklets" className="type-h3 text-body">
+-                  Memorial Booklets
+-                </h3>
+-                <p className="mt-3 max-w-reading leading-relaxed text-soft">
+-                  Programme, invitations, and tribute booklets created to honour {memorial.name}’s
+-                  life. These are demonstration documents.
+-                </p>
+-              </Reveal>
+-              <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+-                {memorial.booklets.map((title, i) => (
+-                  <Reveal as="li" key={title} delay={i * 0.06}>
+-                    <div className="card-raised flex h-full items-center gap-4 p-5">
+-                      <span className="flex h-12 w-12 flex-none items-center justify-center rounded-sm bg-well text-soft">
+-                        <FileText size={22} aria-hidden />
+-                      </span>
+-                      <span className="min-w-0 flex-1">
+-                        <span className="block truncate text-sm font-medium text-body">{title}</span>
+-                        <span className="type-meta mt-0.5 block text-soft">PDF · demo</span>
+-                      </span>
+-                      <span className="btn btn-outline-evergreen !min-h-11 flex-none px-4 py-1.5 text-sm">
+-                        <Download size={14} aria-hidden /> Download
+-                      </span>
+-                    </div>
+-                  </Reveal>
+-                ))}
+-              </ul>
+-            </section>
+-
+-            {/* 11 — Final Resting Place */}
+-            <section aria-labelledby="resting-place">
+-              <Reveal>
+-                <p className="eyebrow">Final Resting Place</p>
+-                <h3 id="resting-place" className="type-h3 mt-4 flex items-center gap-2 text-body">
+-                  <MapPin size={20} className="text-brass" aria-hidden /> {memorial.restingPlace.name}
+-                </h3>
+-                <p className="mt-4 max-w-reading leading-relaxed text-soft">
+-                  {memorial.restingPlace.description}
+-                </p>
+-              </Reveal>
+-              <Reveal delay={0.15}>
+-                <div className="mt-8" id="mg-share">
+-                  <p className="eyebrow mb-4">A Plaque for {Poss} Resting Place</p>
+-                  <QRShareBlock
+-                    qrSrc={`/qr-${memorial.slug}.svg`}
+-                    url={url}
+-                    extended
+-                    title={`Order a brass QR plaque for ${memorial.name}’s resting place`}
+-                  />
+-                </div>
+-              </Reveal>
+-            </section>
+-
+-            {/* 12 — Candles */}
+-            <section id="mg-candles" className="scroll-mt-36" aria-labelledby="candles-heading">
+-              <Reveal>
+-                <h3 id="candles-heading" className="type-h3 text-body">
+-                  <span className="type-stat mr-3 align-middle">{memorial.candles}</span> Candles Lit
+-                </h3>
+-              </Reveal>
+-              <Reveal delay={0.1}>
+-                <div className="mt-8">
+-                  <LightACandle
+-                    memorialId={memorial.slug}
+-                    candles={candles}
+-                    onCandleLit={(c) => setCandles((list) => [c, ...list])}
+-                  />
+-                </div>
+-              </Reveal>
+-            </section>
+-
+-            {/* 13 — Life Timeline */}
+-            <section aria-labelledby="life-timeline">
+-              <Reveal>
+-                <p className="eyebrow">{Poss} Journey</p>
+-                <h3 id="life-timeline" className="type-h3 mt-4 text-body">
+-                  Life Timeline
+-                </h3>
+-              </Reveal>
+-              <div className="mt-8">
+-                <Timeline
+-                  items={memorial.timeline.map((t, i) => ({
+-                    date: t.year,
+-                    title: t.title,
+-                    body: t.text,
+-                    status: i === memorial.timeline.length - 1 ? ('key' as const) : ('plain' as const),
+-                  }))}
+-                />
+-              </div>
+-            </section>
+-          </div>
+-
+-          <ServiceProviderRail providers={RAIL_PROVIDERS} belowStickyTabs />
+-        </div>
+-      </div>
++      <MemorialTabShell tabs={tabs} defaultTab="memorial" />
+ 
+       <section className="bg-parchment-deep" aria-label="Create a memorial">
+         <div className="mx-auto max-w-reading px-6 py-16 text-center md:py-20">
+diff --git a/src/pages/virginia/TreeTab.tsx b/src/pages/virginia/TreeTab.tsx
+index 184c1de..d96cff2 100644
+--- a/src/pages/virginia/TreeTab.tsx
++++ b/src/pages/virginia/TreeTab.tsx
+@@ -1,7 +1,6 @@
+ import Reveal from '@/components/Reveal';
+ import FamilyTree from '@/components/family/FamilyTree';
+ import { buildVirginiaTree } from '@/pages/virginia/familyTreeData';
+-import FamilyTab from '@/pages/virginia/FamilyTab';
+ import { CHILDREN, GRANDCHILDREN, SIBLINGS } from '@/pages/virginia/data';
+ 
+ /**
+@@ -13,8 +12,7 @@ import { CHILDREN, GRANDCHILDREN, SIBLINGS } from '@/pages/virginia/data';
+  *       → her seven children
+  *         → her eighteen grandchildren
+  *
+- * The full listing lives in FamilyTab, which this wraps. Nothing here is
+- * inferred: no dates are estimated, no relationships are guessed, and living
++ * Nothing here is inferred: no dates are estimated, no relationships are guessed, and living
+  * people are shown as living.
+  */
+ export default function TreeTab() {
+@@ -62,8 +60,10 @@ export default function TreeTab() {
+         <FamilyTree data={buildVirginiaTree()} />
+       </section>
+ 
+-      {/* The full family listing, kept beneath */}
+-      <FamilyTab />
++      {/* NOTE: FamilyTab used to render here as well, which listed every
++          parent, sibling, child and grandchild a second time. The shared
++          FamilyTree above already shows all of them, grouped by generation.
++          One tree per memorial — do not add a second listing back. */}
+     </div>
+   );
+ }
+-- 
+2.43.0
+

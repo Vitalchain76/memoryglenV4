@@ -1,0 +1,386 @@
+From 7f3b17995be6b4ebf31269aee9f399eb2ebd5c03 Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.local>
+Date: Sun, 26 Jul 2026 08:29:32 +0000
+Subject: [PATCH] Diagnose the Supabase key, surface the install button,
+ quieten Virginia
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+1. INVALID API KEY — this is configuration, not code, but the code was
+   unhelpful about it. Supabase answers a wrong key with a bare 'Invalid
+   API key', which tells the user nothing and the operator nothing.
+   The anon key is a JWT carrying its own project ref, so we now decode
+   it at startup and name the actual fault: truncated, whitespace, wrong
+   project, wrong role, expired, or URL and key swapped. Logged to the
+   console for the operator; the sign-in form now tells the visitor it is
+   the site's problem and not theirs.
+   Safe in the browser — the anon key is public by design and the check
+   logs structural facts only, never the key.
+
+2. PWA INSTALL — two likely reasons Chrome was not offering it.
+   a) The SPA rewrite could match /sw.js and /manifest.webmanifest.
+      Vercel checks the filesystem first so it probably did not, but if
+      it ever had, registration fails silently and the prompt never
+      appears. The rewrite now excludes them explicitly, and /sw.js gets
+      no-cache plus Service-Worker-Allowed headers.
+   b) Chrome no longer surfaces a visible prompt on most Android phones;
+      the option sits in the three-dot menu where nobody looks. Added an
+      Install button that captures beforeinstallprompt, so it appears
+      only when Chrome has confirmed the site is installable and can
+      never be a button that does nothing. Hidden once installed.
+
+3. DEMO PRIORITY — Virginia was still a second large FeaturedCard,
+   competing with John. She is now a quiet row: small portrait, Founding
+   Memorial label, and the line 'the memorial MemoryGlen was built for'.
+   Permanent and dignified, but no longer competing with the demo.
+   John is now the only FeaturedCard on the directory.
+
+4 tests. 65 pass in total.
+---
+ src/App.tsx                             |  2 +
+ src/__tests__/launch-readiness.test.tsx | 37 +++++++++++
+ src/components/InstallPrompt.tsx        | 87 +++++++++++++++++++++++++
+ src/lib/supabase.ts                     | 47 +++++++++++++
+ src/pages/Memorials.tsx                 | 49 ++++++++------
+ src/pages/SignIn.tsx                    |  8 ++-
+ vercel.json                             | 26 +++++++-
+ 7 files changed, 234 insertions(+), 22 deletions(-)
+ create mode 100644 src/components/InstallPrompt.tsx
+
+diff --git a/src/App.tsx b/src/App.tsx
+index f9ad183..ed4fba3 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -10,6 +10,7 @@ import Account from '@/pages/Account';
+ import Terms from '@/pages/Terms';
+ import Privacy from '@/pages/Privacy';
+ import { AuthProvider } from '@/lib/AuthProvider';
++import InstallPrompt from '@/components/InstallPrompt';
+ import Themes from '@/pages/Themes';
+ import FuneralParlours from '@/pages/FuneralParlours';
+ import BurialSocieties from '@/pages/BurialSocieties';
+@@ -48,6 +49,7 @@ export default function App() {
+           <Route path="*" element={<Memorials />} />
+         </Routes>
+       </Layout>
++      <InstallPrompt />
+     </AuthProvider>
+   );
+ }
+diff --git a/src/__tests__/launch-readiness.test.tsx b/src/__tests__/launch-readiness.test.tsx
+index 44cdef8..0496568 100644
+--- a/src/__tests__/launch-readiness.test.tsx
++++ b/src/__tests__/launch-readiness.test.tsx
+@@ -109,3 +109,40 @@ describe('launch readiness', () => {
+     }
+   });
+ });
++
++describe('post-launch fixes', () => {
++  it('a misconfigured Supabase key is diagnosed precisely, not left as "Invalid API key"', () => {
++    const s = read('src/lib/supabase.ts');
++    expect(s).toContain('describeKeyProblem');
++    expect(s).toContain('different Supabase projects');
++    expect(s).toContain('truncated');
++    // and the user sees something human
++    expect(read('src/pages/SignIn.tsx')).toContain('nothing is wrong on your side');
++  });
++
++  it('the rewrite cannot swallow the service worker or manifest', () => {
++    const v = JSON.parse(read('vercel.json'));
++    const src = v.rewrites[0].source;
++    expect(src).toContain('sw\\.js');
++    expect(src).toContain('manifest\\.webmanifest');
++    expect(v.headers.some((h: { source: string }) => h.source === '/sw.js')).toBe(true);
++  });
++
++  it('there is a visible Install button, shown only when Chrome says it is installable', () => {
++    const s = read('src/components/InstallPrompt.tsx');
++    expect(s).toContain('beforeinstallprompt');
++    expect(s).toContain('display-mode: standalone');
++    expect(s).toContain('appinstalled');
++    expect(read('src/App.tsx')).toContain('<InstallPrompt />');
++  });
++
++  it('John Peters is the only large featured memorial; Virginia is a quiet row', () => {
++    const dir = read('src/pages/Memorials.tsx');
++    const featured = (dir.match(/<FeaturedCard/g) ?? []).length;
++    expect(featured, 'only John should be a FeaturedCard').toBe(1);
++    expect(dir).toContain('/memorials/john-peters');
++    // she keeps a permanent, dignified place
++    expect(dir).toContain('Founding Memorial');
++    expect(dir).toContain('the memorial MemoryGlen was built for');
++  });
++});
+diff --git a/src/components/InstallPrompt.tsx b/src/components/InstallPrompt.tsx
+new file mode 100644
+index 0000000..ef458cb
+--- /dev/null
++++ b/src/components/InstallPrompt.tsx
+@@ -0,0 +1,87 @@
++import { useEffect, useState } from 'react';
++import { Download, X } from 'lucide-react';
++
++/**
++ * "Install MemoryGlen" — a visible button.
++ *
++ * Chrome fires `beforeinstallprompt` when a site meets the install criteria,
++ * but on most Android phones it no longer surfaces a visible prompt on its own;
++ * the option is buried in the ⋮ menu, where nobody looks. Capturing the event
++ * and offering our own button is the supported way to make it discoverable.
++ *
++ * Shows only when Chrome has confirmed the site is installable, so it can never
++ * appear as a button that does nothing. Hidden once installed, and dismissible.
++ */
++
++interface BeforeInstallPromptEvent extends Event {
++  prompt: () => Promise<void>;
++  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
++}
++
++export default function InstallPrompt() {
++  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
++  const [dismissed, setDismissed] = useState(false);
++
++  useEffect(() => {
++    const onPrompt = (e: Event) => {
++      e.preventDefault(); // stop Chrome's own mini-infobar
++      setDeferred(e as BeforeInstallPromptEvent);
++    };
++    const onInstalled = () => setDeferred(null);
++    window.addEventListener('beforeinstallprompt', onPrompt);
++    window.addEventListener('appinstalled', onInstalled);
++    return () => {
++      window.removeEventListener('beforeinstallprompt', onPrompt);
++      window.removeEventListener('appinstalled', onInstalled);
++    };
++  }, []);
++
++  // Already running as an installed app.
++  const standalone =
++    typeof window !== 'undefined' &&
++    (window.matchMedia?.('(display-mode: standalone)').matches ||
++      (window.navigator as { standalone?: boolean }).standalone === true);
++
++  if (!deferred || dismissed || standalone) return null;
++
++  return (
++    <div className="fixed inset-x-4 bottom-4 z-[60] mx-auto max-w-sm rounded-sm border border-brass bg-forest-deep p-4 shadow-raised sm:left-auto sm:right-4">
++      <div className="flex items-start gap-3">
++        <Download size={18} className="mt-0.5 flex-none text-brass" aria-hidden />
++        <div className="min-w-0 flex-1">
++          <p className="font-display text-base text-bone">Install MemoryGlen</p>
++          <p className="mt-1 text-sm leading-relaxed text-sage">
++            Keep it on your home screen, and open memorials straight from your phone.
++          </p>
++          <div className="mt-3 flex gap-3">
++            <button
++              type="button"
++              onClick={() => {
++                void deferred.prompt();
++                void deferred.userChoice.finally(() => setDeferred(null));
++              }}
++              className="btn btn-evergreen !min-h-11 px-4 py-2 text-sm"
++            >
++              Install
++            </button>
++            <button
++              type="button"
++              onClick={() => setDismissed(true)}
++              className="min-h-11 px-2 text-sm text-sage transition-colors hover:text-bone"
++            >
++              Not now
++            </button>
++          </div>
++        </div>
++        <button
++          type="button"
++          onClick={() => setDismissed(true)}
++          aria-label="Dismiss install prompt"
++          className="flex h-11 w-11 flex-none items-center justify-center text-sage transition-colors hover:text-bone"
++        >
++          <X size={16} aria-hidden />
++        </button>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/lib/supabase.ts b/src/lib/supabase.ts
+index aa0adf7..48fe6db 100644
+--- a/src/lib/supabase.ts
++++ b/src/lib/supabase.ts
+@@ -45,6 +45,53 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
+     })
+   : null;
+ 
++/**
++ * Diagnose a misconfigured key at startup.
++ *
++ * Supabase answers a wrong key with a bare "Invalid API key", which tells a
++ * user nothing and tells the operator nothing either. The anon key is a JWT
++ * carrying its own project ref, so we can check it against the URL and say
++ * exactly what is wrong instead.
++ *
++ * Safe to run in the browser: the anon key is public by design, and this logs
++ * only structural facts, never the key itself.
++ */
++function describeKeyProblem(u: string, k: string): string | null {
++  if (/\s/.test(k)) return 'the key contains a space or line break — re-copy it with no trailing newline';
++  if (k.startsWith('http')) return 'the KEY field contains a URL — the URL and key values look swapped';
++  if (u.includes('eyJ')) return 'the URL field contains a key — the URL and key values look swapped';
++
++  const parts = k.split('.');
++  if (parts.length !== 3) return 'the key is not a complete JWT — it looks truncated; it should be roughly 200+ characters';
++
++  try {
++    const pad = (x: string) => x + '='.repeat((4 - (x.length % 4)) % 4);
++    const payload = JSON.parse(atob(pad(parts[1].replace(/-/g, '+').replace(/_/g, '/'))));
++    const urlRef = new URL(u).hostname.split('.')[0];
++    if (payload.ref && payload.ref !== urlRef) {
++      return `the key belongs to project "${payload.ref}" but the URL points at "${urlRef}" — they are from different Supabase projects`;
++    }
++    if (payload.role && payload.role !== 'anon') {
++      return `the key has role "${payload.role}", not "anon" — use the anon public key, never the service_role key`;
++    }
++    if (payload.exp && Date.now() / 1000 > payload.exp) return 'the key has expired';
++  } catch {
++    return 'the key could not be decoded — it is probably truncated or corrupted';
++  }
++  return null;
++}
++
++if (isSupabaseConfigured) {
++  const problem = describeKeyProblem(url as string, anonKey as string);
++  if (problem) {
++    console.error(
++      `[MemoryGlen] Supabase is misconfigured: ${problem}.\n` +
++        'Fix VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY in Vercel → Settings → ' +
++        'Environment Variables, then REDEPLOY (they are baked in at build time).',
++    );
++  }
++}
++
+ if (!isSupabaseConfigured && import.meta.env.DEV) {
+   console.warn(
+     '[MemoryGlen] Supabase is not configured. Copy .env.example to .env and fill it in. ' +
+diff --git a/src/pages/Memorials.tsx b/src/pages/Memorials.tsx
+index 40cf139..96d332a 100644
+--- a/src/pages/Memorials.tsx
++++ b/src/pages/Memorials.tsx
+@@ -381,26 +381,35 @@ export default function Memorials() {
+                 cta="Explore the Demo"
+                 delay={0.1}
+               />
+-              <FeaturedCard
+-                href="/memorials/virginia-dadirayi-chiimba"
+-                img="/virginia-portrait-blue-headscarf.jpg"
+-                imgAlt="Virginia Dadirayi Chiimba, smiling, in a bright blue headscarf"
+-                name="Virginia Dadirayi Chiimba"
+-                years="1955–2025"
+-                line="A loving, caring, strong, and deeply faithful mother. The heart of our family."
+-                stats={
+-                  <>
+-                    <CandleStat count={12} />
+-                    <span className="inline-flex items-center gap-1.5">
+-                      <Users size={14} aria-hidden className="text-evergreen" /> 25 Family
+-                    </span>
+-                  </>
+-                }
+-                badge="Founding Memorial"
+-                badgeClasses="border border-brass bg-brass/10 text-brass"
+-                cta="Visit Memorial"
+-                delay={0}
+-              />
++              {/* Virginia is a REAL family memorial, not part of the public demo.
++                  She keeps a permanent, dignified place here — but a quiet one,
++                  so John Peters leads the demonstration cleanly. Deliberately a
++                  small row rather than a second large featured card. */}
++              <Link
++                to="/memorials/virginia-dadirayi-chiimba"
++                className="card-well group mt-6 flex items-center gap-4 p-4 transition-colors hover:border-brass/50 sm:p-5"
++              >
++                <img
++                  src="/virginia-portrait-blue-headscarf.jpg"
++                  alt="Virginia Dadirayi Chiimba"
++                  width={56}
++                  height={70}
++                  loading="lazy"
++                  className="h-[70px] w-[56px] flex-none rounded-sm object-cover"
++                />
++                <span className="min-w-0 flex-1">
++                  <span className="type-meta block uppercase tracking-[0.14em] text-brass">
++                    Founding Memorial
++                  </span>
++                  <span className="mt-1 block font-display text-base text-body">
++                    Virginia Dadirayi Chiimba
++                  </span>
++                  <span className="type-meta mt-0.5 block text-soft">
++                    1955\u20132025 \u00b7 the memorial MemoryGlen was built for
++                  </span>
++                </span>
++                <ArrowRight size={16} className="flex-none text-brass" aria-hidden />
++              </Link>
+ 
+             </div>
+           </section>
+diff --git a/src/pages/SignIn.tsx b/src/pages/SignIn.tsx
+index 2501b0c..daad48f 100644
+--- a/src/pages/SignIn.tsx
++++ b/src/pages/SignIn.tsx
+@@ -48,7 +48,13 @@ export default function SignIn() {
+     setBusy(false);
+ 
+     if (res.error) {
+-      setError(res.error);
++      // Supabase's bare "Invalid API key" tells nobody anything. Say what it
++      // actually means and who can fix it.
++      setError(
++        /invalid api key/i.test(res.error)
++          ? 'Accounts are not set up correctly on this deployment yet. The site owner needs to check the Supabase keys — nothing is wrong on your side.'
++          : res.error,
++      );
+       return;
+     }
+     if (registering && 'needsConfirmation' in res && res.needsConfirmation) {
+diff --git a/vercel.json b/vercel.json
+index 96efffd..89c171a 100644
+--- a/vercel.json
++++ b/vercel.json
+@@ -1,8 +1,32 @@
+ {
+   "rewrites": [
+     {
+-      "source": "/((?!assets/).*)",
++      "source": "/((?!assets/|sw\\.js|manifest\\.webmanifest|offline\\.html|robots\\.txt|.*\\.(?:png|jpg|jpeg|svg|webp|mp3|ogg|mp4|pdf|ico|webmanifest)).*)",
+       "destination": "/index.html"
+     }
++  ],
++  "headers": [
++    {
++      "source": "/sw.js",
++      "headers": [
++        {
++          "key": "Cache-Control",
++          "value": "public, max-age=0, must-revalidate"
++        },
++        {
++          "key": "Service-Worker-Allowed",
++          "value": "/"
++        }
++      ]
++    },
++    {
++      "source": "/manifest.webmanifest",
++      "headers": [
++        {
++          "key": "Content-Type",
++          "value": "application/manifest+json"
++        }
++      ]
++    }
+   ]
+ }
+-- 
+2.43.0
+

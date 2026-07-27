@@ -1,0 +1,256 @@
+From 096dc940c954af4a595f86187d2094d89569b5d8 Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.local>
+Date: Sun, 26 Jul 2026 09:21:00 +0000
+Subject: [PATCH] Fix authentication routing: Sign In pointed at the memorial
+ wizard
+
+THE BUG, and it was not subtle: the header link labelled 'Sign In' had
+to="/create". Anyone trying to sign in landed on the memorial-creation
+wizard. So did anyone pressing 'Get Started'.
+
+Two things made it invisible:
+  - The real sign-in link (AccountLink) HID ITSELF whenever Supabase was
+    unconfigured. With the anon key broken on the live deployment, the
+    only remaining button in the header was the mislabelled one.
+  - /register, /signup and /login had no routes at all, so they fell
+    through to the catch-all.
+
+FIXED
+  - Header 'Sign In' removed; AccountLink is the only sign-in entry and
+    it is ALWAYS rendered. Hiding the way in when auth is broken is how
+    this went unnoticed; the sign-in page explains the situation instead.
+  - 'Get Started' now goes to /register, not /create. Header and mobile
+    drawer both.
+  - New routes: /signin, /login, /sign-in for signing in; /register,
+    /signup, /sign-up, /create-account for registering. Aliases exist
+    because those are the paths people actually type.
+  - /register is a distinct page with its own heading ('Create your
+    account'), not a hidden toggle inside sign-in. It shares SignIn's
+    form, so there is one implementation.
+  - Switching between the two now updates the URL, so both pages are
+    linkable and the Back button behaves.
+
+6 tests, including one asserting no auth route lands on the create
+wizard. 67 pass in total.
+---
+ src/App.tsx                             |  9 +++++
+ src/__tests__/launch-readiness.test.tsx | 54 +++++++++++++++++++++++++
+ src/components/Navbar.tsx               | 25 +++++++-----
+ src/pages/Register.tsx                  | 12 ++++++
+ src/pages/SignIn.tsx                    | 17 +++++---
+ 5 files changed, 101 insertions(+), 16 deletions(-)
+ create mode 100644 src/pages/Register.tsx
+
+diff --git a/src/App.tsx b/src/App.tsx
+index f9ad183..3340bd0 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -7,6 +7,7 @@ import JohnPetersMemorial from '@/pages/JohnPetersMemorial';
+ import MemorialPage from '@/pages/MemorialPage';
+ import SignIn from '@/pages/SignIn';
+ import Account from '@/pages/Account';
++import Register from '@/pages/Register';
+ import Terms from '@/pages/Terms';
+ import Privacy from '@/pages/Privacy';
+ import { AuthProvider } from '@/lib/AuthProvider';
+@@ -34,7 +35,15 @@ export default function App() {
+             Declared AFTER the two template routes so they always win. */}
+           <Route path="/memorials/:slug" element={<MemorialPage />} />
+         {/* Accounts. Memorial routes above stay public and ungated. */}
++          {/* Auth. Aliases exist because people type /login and /signup, and a
++              404 (or worse, the catch-all) at that moment loses the user. */}
+           <Route path="/signin" element={<SignIn />} />
++          <Route path="/login" element={<SignIn />} />
++          <Route path="/sign-in" element={<SignIn />} />
++          <Route path="/register" element={<Register />} />
++          <Route path="/signup" element={<Register />} />
++          <Route path="/sign-up" element={<Register />} />
++          <Route path="/create-account" element={<Register />} />
+           <Route path="/account" element={<Account />} />
+           <Route path="/terms" element={<Terms />} />
+           <Route path="/privacy" element={<Privacy />} />
+diff --git a/src/__tests__/launch-readiness.test.tsx b/src/__tests__/launch-readiness.test.tsx
+index 44cdef8..cb9f3ae 100644
+--- a/src/__tests__/launch-readiness.test.tsx
++++ b/src/__tests__/launch-readiness.test.tsx
+@@ -109,3 +109,57 @@ describe('launch readiness', () => {
+     }
+   });
+ });
++
++describe('authentication routing', () => {
++  it('the header Sign In link no longer points at /create', () => {
++    const nav = read('src/components/Navbar.tsx');
++    // The mislabelled link is gone.
++    expect(nav).not.toMatch(/to="\/create"[\s\S]{0,200}Sign In/);
++  });
++
++  it('the sign-in link is always rendered, even when Supabase is unconfigured', () => {
++    const nav = read('src/components/Navbar.tsx');
++    expect(nav).not.toContain('if (!configured) return null;');
++    at('/');
++    expect(screen.getAllByRole('link', { name: /Sign in/i }).length).toBeGreaterThan(0);
++  });
++
++  it('/signin shows a Sign in page', () => {
++    at('/signin');
++    expect(screen.getAllByRole('heading', { name: /^Sign in$/i }).length).toBeGreaterThan(0);
++  });
++
++  it('/register, /signup and /create-account all show Create your account', () => {
++    for (const path of ['/register', '/signup', '/create-account']) {
++      const { unmount } = render(
++        <MemoryRouter initialEntries={[path]}><App /></MemoryRouter>,
++      );
++      expect(
++        screen.getAllByRole('heading', { name: /Create your account/i }).length,
++        `${path} should show the register page`,
++      ).toBeGreaterThan(0);
++      unmount();
++    }
++  });
++
++  it('/login reaches sign in, not the catch-all', () => {
++    at('/login');
++    expect(screen.getAllByRole('heading', { name: /^Sign in$/i }).length).toBeGreaterThan(0);
++  });
++
++  it('no auth route falls through to the memorial creation wizard', () => {
++    // "Create a Memorial" also appears as a header/footer link on every page,
++    // so assert on the page's own H1 rather than any occurrence of the phrase.
++    for (const path of ['/signin', '/login', '/register', '/signup']) {
++      const { unmount } = render(
++        <MemoryRouter initialEntries={[path]}><App /></MemoryRouter>,
++      );
++      const headings = screen.getAllByRole('heading', { level: 1 }).map((h) => h.textContent ?? '');
++      expect(
++        headings.some((h) => /Sign in|Create your account/i.test(h)),
++        `${path} showed headings: ${headings.join(' | ')}`,
++      ).toBe(true);
++      unmount();
++    }
++  });
++});
+diff --git a/src/components/Navbar.tsx b/src/components/Navbar.tsx
+index cec624b..3fb2700 100644
+--- a/src/components/Navbar.tsx
++++ b/src/components/Navbar.tsx
+@@ -20,10 +20,16 @@ const NAV_LINKS = [
+  * Positioning contract: sticky in normal flow — pages do NOT compensate for
+  * nav height.
+  */
+-/** Sign in / account. Hidden entirely when accounts are not configured. */
++/**
++ * Sign in / My account.
++ *
++ * Always rendered. It used to hide itself when Supabase was unconfigured, which
++ * meant a broken deployment silently had no way to sign in at all — and the only
++ * remaining button went to /create. The sign-in page explains the situation
++ * clearly if accounts are not ready; the link itself must always be there.
++ */
+ function AccountLink({ mobile = false }: { mobile?: boolean }) {
+-  const { user, configured } = useAuth();
+-  if (!configured) return null;
++  const { user } = useAuth();
+   const to = user ? '/account' : '/signin';
+   const label = user ? 'My account' : 'Sign in';
+   return mobile ? (
+@@ -113,14 +119,13 @@ export default function Navbar() {
+             >
+               <Search size={20} aria-hidden />
+             </button>
++            {/* This said "Sign In" and linked to /create. Anyone trying to sign
++                in landed on the memorial-creation wizard instead. */}
++            <AccountLink />
+             <Link
+-              to="/create"
+-              className="hidden min-h-12 items-center px-2 text-[0.9375rem] font-medium text-body transition-colors hover:text-evergreen sm:inline-flex"
++              to="/register"
++              className="btn btn-evergreen hidden !min-h-11 px-5 py-2 text-[0.9375rem] sm:inline-flex"
+             >
+-              Sign In
+-            </Link>
+-            <AccountLink />
+-            <Link to="/create" className="btn btn-evergreen hidden !min-h-11 px-5 py-2 text-[0.9375rem] sm:inline-flex">
+               Get Started
+             </Link>
+             <button
+@@ -224,7 +229,7 @@ export default function Navbar() {
+                 className="mt-8"
+               >
+                 <AccountLink mobile />
+-                <Link to="/create" className="btn btn-evergreen w-full">
++                <Link to="/register" className="btn btn-evergreen w-full">
+                   Get Started
+                 </Link>
+               </motion.div>
+diff --git a/src/pages/Register.tsx b/src/pages/Register.tsx
+new file mode 100644
+index 0000000..58b18ac
+--- /dev/null
++++ b/src/pages/Register.tsx
+@@ -0,0 +1,12 @@
++import SignIn from '@/pages/SignIn';
++
++/**
++ * Create Account — a distinct page, not a toggle hidden inside sign-in.
++ *
++ * Served at /register, /signup and /create-account, because those are the three
++ * things people type. It shares SignIn's form so there is one implementation and
++ * one place for bugs to live.
++ */
++export default function Register() {
++  return <SignIn initialMode="register" />;
++}
+diff --git a/src/pages/SignIn.tsx b/src/pages/SignIn.tsx
+index 2501b0c..73f0ebf 100644
+--- a/src/pages/SignIn.tsx
++++ b/src/pages/SignIn.tsx
+@@ -9,10 +9,10 @@ import { useAuth } from '@/lib/useAuth';
+  * `?mode=register` opens on registration. Memorial pages remain public — this
+  * exists so family can be invited in, not to gate the memorials.
+  */
+-export default function SignIn() {
++export default function SignIn({ initialMode }: { initialMode?: 'signin' | 'register' } = {}) {
+   const [params] = useSearchParams();
+   const [mode, setMode] = useState<'signin' | 'register'>(
+-    params.get('mode') === 'register' ? 'register' : 'signin',
++    initialMode ?? (params.get('mode') === 'register' ? 'register' : 'signin'),
+   );
+   const { signIn, signUp, configured } = useAuth();
+   const navigate = useNavigate();
+@@ -64,10 +64,12 @@ export default function SignIn() {
+         <Reveal>
+           <p className="eyebrow">{registering ? 'Create an account' : 'Welcome back'}</p>
+           <h1 className="type-h2 mt-4 text-body">
+-            {registering ? 'Join your family on MemoryGlen' : 'Sign in'}
++            {registering ? 'Create your account' : 'Sign in'}
+           </h1>
+           <p className="mt-3 leading-relaxed text-soft">
+-            Memorials stay open to everyone. An account lets you add memories and invite family.
++            {registering
++              ? 'An account lets you build a memorial, add memories and invite your family. Memorials stay open to everyone whether you have one or not.'
++              : 'Sign in to add to a memorial or invite family. Browsing memorials never needs an account.'}
+           </p>
+         </Reveal>
+ 
+@@ -134,11 +136,14 @@ export default function SignIn() {
+               <button
+                 type="button"
+                 onClick={() => {
+-                  setMode(registering ? 'signin' : 'register');
++                  const next = registering ? 'signin' : 'register';
++                  setMode(next);
+                   setError(null);
+                   setNotice(null);
++                  // Keep the URL honest so the page is linkable and Back works.
++                  navigate(next === 'register' ? '/register' : '/signin', { replace: true });
+                 }}
+-                className="underline underline-offset-4 hover:text-evergreen"
++                className="min-h-11 underline underline-offset-4 hover:text-evergreen"
+               >
+                 {registering ? 'Sign in' : 'Create one'}
+               </button>
+-- 
+2.43.0
+

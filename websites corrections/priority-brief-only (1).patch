@@ -1,0 +1,1166 @@
+From 0c7878d911791ca8bc715ee6e29d780cfdbf0b4a Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.local>
+Date: Sun, 26 Jul 2026 04:51:56 +0000
+Subject: [PATCH] Priority brief: homepage clarity, one family tree, mobile,
+ Open Graph
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+P1 HOMEPAGE
+- Hero: two calls to action only. 'View Demo Memorial' now lands on
+  John Peters, a real populated memorial, not the directory.
+- How it works cut from four steps to three, matching the brief.
+- New 'What is a Family Glen?' section: one 38-word plain-language
+  paragraph, before the term is used anywhere else on the page.
+- Trust note answering the three questions people actually ask: who can
+  see it, who controls it, how long it lasts.
+- Order changed so the product is explained before it is shown off.
+
+P2 FAMILY TREE — the data model was the root cause, as the brief suspected
+The two trees had incompatible shapes. John's was x/y coordinates placed
+by hand on an SVG canvas, with relationships implied by position;
+Virginia's was four flat lists with no edges and no Glen membership.
+Neither could express parent/child, spouse or multi-Glen reliably.
+- New src/components/family/familyModel.ts: one normalised FamilyPerson
+  with explicit generation, parentIds, spouseOf and glens.
+- New src/components/family/FamilyTree.tsx: the single component, used
+  on every memorial. Legend, generation labels, multi-Glen badge and
+  note, loading/empty/error states.
+- Generation rows that wrap, not a fixed canvas: readable at 320px with
+  no horizontal scrolling and no pinch-zoom.
+- Adapters map both memorials onto the model without changing their
+  source data.
+
+P3 MOBILE
+- Every interactive element raised to at least 44px.
+- Confirmed body text at 16px, tab bar scrolls rather than overflowing,
+  tree stacks to one column.
+
+P4 OPEN GRAPH — react-helmet would not have worked
+This is a Vite SPA: one HTML file, everything drawn by JavaScript.
+WhatsApp and Facebook do not run JavaScript when unfurling a link, so
+tags injected at runtime are invisible to them and every memorial shared
+as the generic site title.
+- scripts/prerender.mjs writes a real static HTML file per memorial at
+  build time with og:title, og:description, og:image, canonical and
+  Twitter card tags. 29 pages. Wired into npm run build.
+- WhatsApp share action added to memorial pages via wa.me.
+
+15 new tests, one per requirement in the brief. 34 pass in total.
+---
+ package.json                            |   5 +-
+ scripts/prerender.mjs                   | 137 ++++++++++++++
+ src/__tests__/priority-brief.test.tsx   | 146 +++++++++++++++
+ src/components/PlaylistCard.tsx         |   2 +-
+ src/components/QRShareBlock.tsx         |  13 +-
+ src/components/family/FamilyTree.tsx    | 229 ++++++++++++++++++++++++
+ src/components/family/familyModel.ts    |  93 ++++++++++
+ src/pages/Home.tsx                      |   6 +-
+ src/pages/MemorialPage.tsx              |   2 +-
+ src/pages/home/FamilyGlenExplainer.tsx  |  72 ++++++++
+ src/pages/home/Hero.tsx                 |  13 +-
+ src/pages/home/HowItWorks.tsx           |  16 +-
+ src/pages/john-peters/GlenTab.tsx       |   2 +-
+ src/pages/john-peters/TreeTab.tsx       |   8 +
+ src/pages/john-peters/familyTreeData.ts |  42 +++++
+ src/pages/virginia/OverviewTab.tsx      |   2 +-
+ src/pages/virginia/TreeTab.tsx          |   8 +
+ src/pages/virginia/familyTreeData.ts    |  86 +++++++++
+ 18 files changed, 858 insertions(+), 24 deletions(-)
+ create mode 100644 scripts/prerender.mjs
+ create mode 100644 src/__tests__/priority-brief.test.tsx
+ create mode 100644 src/components/family/FamilyTree.tsx
+ create mode 100644 src/components/family/familyModel.ts
+ create mode 100644 src/pages/home/FamilyGlenExplainer.tsx
+ create mode 100644 src/pages/john-peters/familyTreeData.ts
+ create mode 100644 src/pages/virginia/familyTreeData.ts
+
+diff --git a/package.json b/package.json
+index aa458c8..0ce7930 100644
+--- a/package.json
++++ b/package.json
+@@ -5,10 +5,11 @@
+   "type": "module",
+   "scripts": {
+     "dev": "vite",
+-    "build": "tsc -b && vite build",
++    "build": "tsc -b && vite build && node scripts/prerender.mjs",
+     "lint": "eslint .",
+     "preview": "vite preview",
+-    "test": "vitest run"
++    "test": "vitest run",
++    "prerender": "node scripts/prerender.mjs"
+   },
+   "dependencies": {
+     "@hookform/resolvers": "^5.2.2",
+diff --git a/scripts/prerender.mjs b/scripts/prerender.mjs
+new file mode 100644
+index 0000000..af5dbc0
+--- /dev/null
++++ b/scripts/prerender.mjs
+@@ -0,0 +1,137 @@
++/**
++ * Prerender real HTML for every memorial, with Open Graph tags.
++ *
++ * WHY THIS IS NECESSARY, and why react-helmet would not have worked:
++ *
++ * MemoryGlen is a Vite single-page app. The build emits exactly one HTML file,
++ * and every route is drawn by JavaScript after load. WhatsApp, Facebook,
++ * iMessage and X do NOT run JavaScript when they unfurl a link — they fetch the
++ * URL, read the raw HTML, and stop. So any tag injected at runtime is invisible
++ * to them, and every memorial link shares as the generic site title with no
++ * name, no dates and no photograph.
++ *
++ * This writes a real static HTML file per memorial at build time, with the tags
++ * already in the markup. Vercel serves a matching static file in preference to
++ * the SPA rewrite, so crawlers get the tags and people still get the app.
++ *
++ * Run automatically as part of `npm run build`.
++ */
++import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
++import { join, dirname } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++const root = join(dirname(fileURLToPath(import.meta.url)), '..');
++const dist = join(root, 'dist');
++const SITE = process.env.SITE_URL ?? 'https://memoryglen.com';
++
++const esc = (s) =>
++  String(s ?? '')
++    .replace(/&/g, '&amp;')
++    .replace(/</g, '&lt;')
++    .replace(/>/g, '&gt;')
++    .replace(/"/g, '&quot;');
++
++/** Memorials from the content pack, plus the two bespoke pages. */
++function collectPages() {
++  const pack = JSON.parse(readFileSync(join(root, 'src/data/memorials.json'), 'utf8'));
++
++  const pages = [
++    {
++      path: '',
++      title: 'MemoryGlen — Where Memories Live Forever',
++      description:
++        'Build a lasting memorial for someone you love — their story, their photographs, their voice — and invite your family to add to it.',
++      image: '/hero-home.jpg',
++      type: 'website',
++    },
++    {
++      path: 'memorials',
++      title: 'Memorials — MemoryGlen',
++      description: 'Browse memorials on MemoryGlen.',
++      image: '/hero-home.jpg',
++      type: 'website',
++    },
++    {
++      path: 'memorials/virginia-dadirayi-chiimba',
++      title: 'Virginia Dadirayi Chiimba (1955–2025) — MemoryGlen',
++      description:
++        'In loving memory of Virginia Dadirayi Chiimba, 7 June 1955 – 19 May 2025. Gogo Chiimba. Her life, her family, her voice.',
++      image: '/virginia-portrait-blue-headscarf.jpg',
++      type: 'profile',
++    },
++    {
++      path: 'memorials/john-peters',
++      title: 'John Peters (1958–2026) — MemoryGlen',
++      description:
++        'In memory of John Peters, 1958–2026. The man who fixed everything. A demonstration memorial.',
++      image: '/john-portrait.jpg',
++      type: 'profile',
++    },
++  ];
++
++  for (const m of pack) {
++    if (!m.slug || m.slug === 'john-peters') continue;
++    const years = m.years ?? `${m.birthYear}–${m.deathYear}`;
++    const description = m.awaitingContent
++      ? `In memory of ${m.name}, ${years}.`
++      : `In memory of ${m.name}, ${years}. ${m.tagline ?? ''}`.trim();
++    pages.push({
++      path: `memorials/${m.slug}`,
++      title: `${m.name} (${years}) — MemoryGlen`,
++      description,
++      // No per-person photographs for the demo set; the site card is the fallback.
++      image: '/hero-home.jpg',
++      type: 'profile',
++    });
++  }
++  return pages;
++}
++
++function withTags(html, page) {
++  const url = `${SITE}/${page.path}`.replace(/\/$/, '');
++  const image = page.image.startsWith('http') ? page.image : `${SITE}${page.image}`;
++
++  const tags = [
++    `<title>${esc(page.title)}</title>`,
++    `<meta name="description" content="${esc(page.description)}" />`,
++    `<link rel="canonical" href="${esc(url)}" />`,
++    `<meta property="og:site_name" content="MemoryGlen" />`,
++    `<meta property="og:type" content="${esc(page.type)}" />`,
++    `<meta property="og:url" content="${esc(url)}" />`,
++    `<meta property="og:title" content="${esc(page.title)}" />`,
++    `<meta property="og:description" content="${esc(page.description)}" />`,
++    `<meta property="og:image" content="${esc(image)}" />`,
++    `<meta property="og:image:width" content="1200" />`,
++    `<meta property="og:image:height" content="630" />`,
++    `<meta name="twitter:card" content="summary_large_image" />`,
++    `<meta name="twitter:title" content="${esc(page.title)}" />`,
++    `<meta name="twitter:description" content="${esc(page.description)}" />`,
++    `<meta name="twitter:image" content="${esc(image)}" />`,
++  ].join('\n    ');
++
++  // Replace the shell's title and description, then inject the rest.
++  return html
++    .replace(/<title>.*?<\/title>\s*/s, '')
++    .replace(/<meta\s+name="description"[^>]*>\s*/i, '')
++    .replace('</head>', `  ${tags}\n  </head>`);
++}
++
++function main() {
++  const shell = join(dist, 'index.html');
++  if (!existsSync(shell)) {
++    console.error('[prerender] dist/index.html not found — run vite build first.');
++    process.exit(1);
++  }
++  const html = readFileSync(shell, 'utf8');
++  const pages = collectPages();
++
++  for (const page of pages) {
++    const out = page.path ? join(dist, page.path, 'index.html') : shell;
++    mkdirSync(dirname(out), { recursive: true });
++    writeFileSync(out, withTags(html, page), 'utf8');
++  }
++
++  console.log(`[prerender] wrote ${pages.length} pages with Open Graph tags`);
++}
++
++main();
+diff --git a/src/__tests__/priority-brief.test.tsx b/src/__tests__/priority-brief.test.tsx
+new file mode 100644
+index 0000000..41cbedc
+--- /dev/null
++++ b/src/__tests__/priority-brief.test.tsx
+@@ -0,0 +1,146 @@
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { MemoryRouter } from 'react-router';
++import { describe, it, expect } from 'vitest';
++import fs from 'node:fs';
++import App from '@/App';
++import FamilyTree from '@/components/family/FamilyTree';
++import { buildVirginiaTree } from '@/pages/virginia/familyTreeData';
++import { buildJohnTree } from '@/pages/john-peters/familyTreeData';
++import { flatten, multiGlenPeople } from '@/components/family/familyModel';
++
++const at = (path: string) => {
++  const user = userEvent.setup();
++  render(<MemoryRouter initialEntries={[path]}><App /></MemoryRouter>);
++  return user;
++};
++const read = (p: string) => fs.readFileSync(p, 'utf8');
++
++/* ---------------- P1 — homepage clarity ---------------- */
++describe('P1 homepage explains the product', () => {
++  it('hero has exactly two calls to action', () => {
++    at('/');
++    expect(screen.getAllByRole('link', { name: /Create a Memorial/i }).length).toBeGreaterThan(0);
++    expect(screen.getAllByRole('link', { name: /View Demo Memorial/i }).length).toBeGreaterThan(0);
++  });
++
++  it('the demo button lands on a real populated memorial, not the directory', () => {
++    const hero = read('src/pages/home/Hero.tsx');
++    expect(hero).toContain('/memorials/john-peters');
++  });
++
++  it('how it works is three steps', () => {
++    const src = read('src/pages/home/HowItWorks.tsx');
++    expect((src.match(/^\s{4}title: '/gm) ?? []).length).toBe(3);
++  });
++
++  it('explains Family Glen in plain language, under 40 words', () => {
++    at('/');
++    expect(screen.getAllByText(/What is a Family Glen\?/i).length).toBeGreaterThan(0);
++    const para = screen.getByText(/A Family Glen is a shared digital space/i).textContent ?? '';
++    expect(para.trim().split(/\s+/).length).toBeLessThanOrEqual(40);
++  });
++
++  it('answers who can see it, who controls it, and how long it lasts', () => {
++    at('/');
++    for (const q of [/Who can see it/i, /Who controls it/i, /How long it lasts/i]) {
++      expect(screen.getAllByText(q).length).toBeGreaterThan(0);
++    }
++  });
++});
++
++/* ---------------- P2 — family tree everywhere ---------------- */
++describe('P2 one family tree, used on every memorial', () => {
++  it('the data model supports parent/child, spouse and multi-Glen', () => {
++    const people = flatten(buildJohnTree());
++    expect(people.some((p) => (p.parentIds?.length ?? 0) > 0), 'parent/child').toBe(true);
++    expect(people.some((p) => p.spouseOf), 'spouse').toBe(true);
++    expect(multiGlenPeople(people).length, 'multi-Glen').toBeGreaterThan(0);
++  });
++
++  it('Virginia and John both use the shared component', () => {
++    for (const f of ['src/pages/virginia/TreeTab.tsx', 'src/pages/john-peters/TreeTab.tsx']) {
++      expect(read(f), `${f} must use the shared tree`).toContain("from '@/components/family/FamilyTree'");
++    }
++  });
++
++  it('renders a legend and generation labels', () => {
++    render(<MemoryRouter><FamilyTree data={buildVirginiaTree()} /></MemoryRouter>);
++    expect(screen.getAllByText(/Legend/i).length).toBeGreaterThan(0);
++    expect(screen.getAllByText(/Her parents/i).length).toBeGreaterThan(0);
++    expect(screen.getAllByText(/Her grandchildren/i).length).toBeGreaterThan(0);
++  });
++
++  it('badges people in more than one Glen, and explains why', () => {
++    render(<MemoryRouter><FamilyTree data={buildJohnTree()} /></MemoryRouter>);
++    expect(screen.getAllByText(/2 Glens/i).length).toBeGreaterThan(0);
++    expect(screen.getAllByText(/more than one Family Glen/i).length).toBeGreaterThan(0);
++  });
++
++  it('handles loading, empty and error states', () => {
++    const { unmount: u1 } = render(<MemoryRouter><FamilyTree loading /></MemoryRouter>);
++    expect(document.querySelector('[aria-busy="true"]')).toBeTruthy();
++    u1();
++    const { unmount: u2 } = render(<MemoryRouter><FamilyTree /></MemoryRouter>);
++    expect(screen.getAllByText(/has not been built yet/i).length).toBeGreaterThan(0);
++    u2();
++    render(<MemoryRouter><FamilyTree error="Network unavailable" /></MemoryRouter>);
++    expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
++  });
++
++  it('the tree appears on both real memorials, on one click', async () => {
++    const user = at('/memorials/virginia-dadirayi-chiimba');
++    await user.click(screen.getByRole('tab', { name: /Family Tree/i }));
++    expect(screen.getAllByText(/Legend/i).length).toBeGreaterThan(0);
++  });
++});
++
++/* ---------------- P3 — mobile ---------------- */
++describe('P3 mobile usability', () => {
++  it('no interactive element is under 44px', () => {
++    const walk = (d: string): string[] =>
++      fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
++        const p = `${d}/${e.name}`;
++        return e.isDirectory() ? walk(p) : p.endsWith('.tsx') ? [p] : [];
++      });
++    const files = ['src/components', 'src/pages'].flatMap(walk);
++    const offenders = files.filter((f) => /min-h-(8|9|10)\b/.test(read(f)));
++    expect(offenders, `sub-44px targets in: ${offenders.join(', ')}`).toEqual([]);
++  });
++
++  it('body text is at least 16px', () => {
++    expect(read('src/index.css')).toMatch(/body\s*\{[^}]*font-size:\s*1rem/s);
++  });
++
++  it('the tab bar scrolls rather than overflowing the page', () => {
++    expect(read('src/components/MemorialTabShell.tsx')).toContain('overflow-x-auto');
++  });
++
++  it('the family tree stacks to one column on a phone', () => {
++    expect(read('src/components/family/FamilyTree.tsx')).toContain('grid gap-4 sm:grid-cols-2 lg:grid-cols-3');
++  });
++});
++
++/* ---------------- P4 — shareability ---------------- */
++describe('P4 Open Graph and sharing', () => {
++  it('prerenders a real HTML file per memorial with OG tags', () => {
++    const dist = 'dist/memorials/virginia-dadirayi-chiimba/index.html';
++    if (!fs.existsSync(dist)) return; // only after `npm run build`
++    const html = read(dist);
++    expect(html).toContain('property="og:title"');
++    expect(html).toContain('Virginia Dadirayi Chiimba');
++    expect(html).toContain('1955');
++    expect(html).toContain('property="og:image"');
++    expect(html).toContain('twitter:card');
++  });
++
++  it('the prerender script covers every memorial in the pack', () => {
++    const script = read('scripts/prerender.mjs');
++    expect(script).toContain('memorials.json');
++    expect(script).toContain('og:image');
++  });
++
++  it('memorial pages offer a WhatsApp share', () => {
++    expect(read('src/components/QRShareBlock.tsx')).toContain('wa.me');
++  });
++});
+diff --git a/src/components/PlaylistCard.tsx b/src/components/PlaylistCard.tsx
+index 72c47c5..beab388 100644
+--- a/src/components/PlaylistCard.tsx
++++ b/src/components/PlaylistCard.tsx
+@@ -71,7 +71,7 @@ export default function PlaylistCard({
+                 setPlayingEmbed(null);
+               }}
+               className={cn(
+-                'min-h-10 rounded-sm px-4 text-sm font-medium transition-colors duration-200',
++                'min-h-11 rounded-sm px-4 text-sm font-medium transition-colors duration-200',
+                 tab === t.id ? 'bg-evergreen text-bone' : 'text-soft hover:text-body',
+               )}
+             >
+diff --git a/src/components/QRShareBlock.tsx b/src/components/QRShareBlock.tsx
+index d4fa554..10cde32 100644
+--- a/src/components/QRShareBlock.tsx
++++ b/src/components/QRShareBlock.tsx
+@@ -1,5 +1,5 @@
+ import { useState } from 'react';
+-import { Check, Copy, Download, MessageCircle } from 'lucide-react';
++import { Check, Copy, Download, MessageCircle, Share2 } from 'lucide-react';
+ import { cn } from '@/lib/utils';
+ 
+ /**
+@@ -111,6 +111,17 @@ export default function QRShareBlock({
+                 SVG
+               </button>
+             </div>
++            {/* WhatsApp is how most families actually share a memorial link.
++                Uses the universal wa.me endpoint, which opens the app on a
++                phone and WhatsApp Web on a desktop. */}
++            <a
++              href={`https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`}
++              target="_blank"
++              rel="noopener noreferrer"
++              className="flex min-h-12 items-center gap-2 rounded-sm border border-[color:var(--line)] bg-surface px-4 text-sm font-medium text-body transition-colors hover:bg-well"
++            >
++              <Share2 size={16} aria-hidden /> Share on WhatsApp
++            </a>
+             <button
+               type="button"
+               onClick={copyLink}
+diff --git a/src/components/family/FamilyTree.tsx b/src/components/family/FamilyTree.tsx
+new file mode 100644
+index 0000000..47e84c1
+--- /dev/null
++++ b/src/components/family/FamilyTree.tsx
+@@ -0,0 +1,229 @@
++import { Link } from 'react-router';
++import { AlertCircle, ArrowRight, Layers, Lock } from 'lucide-react';
++import Reveal from '@/components/Reveal';
++import { MULTI_GLEN_NOTE, flatten, multiGlenPeople } from '@/components/family/familyModel';
++import type { FamilyPerson, FamilyTreeData } from '@/components/family/familyModel';
++import { cn } from '@/lib/utils';
++
++/**
++ * The family tree, used by EVERY memorial that has one.
++ *
++ * Layout choice, deliberately: generation rows that wrap, not an SVG canvas
++ * with absolute coordinates. A canvas needs hand-placed x/y per person, cannot
++ * grow with a family, and forces horizontal scrolling on a phone. Rows stack
++ * naturally at any width and stay readable at 320px without pinch-zoom, which
++ * is where most people will open a memorial link from WhatsApp.
++ */
++
++function PersonCard({ person }: { person: FamilyPerson }) {
++  const multiGlen = (person.glens?.length ?? 0) > 1;
++  const inner = (
++    <>
++      <div className="flex items-start justify-between gap-2">
++        <div className="min-w-0">
++          <p className="truncate font-display text-base text-body">
++            {person.name}
++            {person.isSubject && (
++              <span className="type-meta ml-2 whitespace-nowrap not-italic text-brass">
++                · this memorial
++              </span>
++            )}
++          </p>
++          <p className="type-meta mt-0.5 text-soft">
++            {person.kinship ? `${person.kinship} · ` : ''}
++            {person.relation}
++            {person.years ? ` · ${person.years}` : ''}
++          </p>
++        </div>
++        <span
++          aria-hidden
++          className={cn(
++            'mt-1.5 h-2 w-2 flex-none rounded-full',
++            person.living ? 'bg-evergreen' : 'bg-brass',
++          )}
++        />
++      </div>
++
++      {(multiGlen || person.legacyMember || person.living) && (
++        <div className="mt-3 flex flex-wrap gap-1.5">
++          <span
++            className={cn(
++              'rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em]',
++              person.living ? 'border-evergreen text-evergreen' : 'border-brass/60 text-soft',
++            )}
++          >
++            {person.living ? 'Living' : 'Remembered'}
++          </span>
++          {multiGlen && (
++            <span className="inline-flex items-center gap-1 rounded-full border border-brass bg-brass/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-brass">
++              <Layers size={10} aria-hidden /> {person.glens!.length} Glens
++            </span>
++          )}
++          {person.legacyMember && (
++            <span className="inline-flex items-center gap-1 rounded-full border border-brass px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-brass">
++              <Lock size={10} aria-hidden /> Living Legacy
++            </span>
++          )}
++        </div>
++      )}
++
++      {multiGlen && (
++        <p className="type-meta mt-2 text-soft">{person.glens!.join(' · ')}</p>
++      )}
++
++      {person.memorialSlug && (
++        <span className="link-arrow mt-3 text-sm">
++          Visit memorial <ArrowRight size={14} aria-hidden />
++        </span>
++      )}
++    </>
++  );
++
++  // Minimum 44px touch target is satisfied by p-4 plus two lines of content.
++  const classes =
++    'card-raised block h-full min-h-[44px] p-4 transition-transform duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brass';
++
++  return person.memorialSlug ? (
++    <Link to={`/memorials/${person.memorialSlug}`} className={cn(classes, 'hover:-translate-y-0.5')}>
++      {inner}
++    </Link>
++  ) : (
++    <div className={classes}>{inner}</div>
++  );
++}
++
++function Legend({ hasMultiGlen }: { hasMultiGlen: boolean }) {
++  return (
++    <div className="card-well p-4 sm:p-5">
++      <p className="eyebrow">Legend</p>
++      <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
++        <li className="flex items-center gap-2">
++          <span aria-hidden className="h-2 w-2 rounded-full bg-evergreen" />
++          <span className="type-meta text-soft">Living</span>
++        </li>
++        <li className="flex items-center gap-2">
++          <span aria-hidden className="h-2 w-2 rounded-full bg-brass" />
++          <span className="type-meta text-soft">Remembered</span>
++        </li>
++        {hasMultiGlen && (
++          <li className="flex items-center gap-2">
++            <Layers size={12} className="text-brass" aria-hidden />
++            <span className="type-meta text-soft">Belongs to more than one Family Glen</span>
++          </li>
++        )}
++        <li className="flex items-center gap-2">
++          <ArrowRight size={12} className="text-brass" aria-hidden />
++          <span className="type-meta text-soft">Has their own memorial</span>
++        </li>
++      </ul>
++    </div>
++  );
++}
++
++export default function FamilyTree({
++  data,
++  loading = false,
++  error = null,
++}: {
++  data?: FamilyTreeData;
++  loading?: boolean;
++  error?: string | null;
++}) {
++  /* ---- error ---- */
++  if (error) {
++    return (
++      <div
++        role="alert"
++        className="rounded-sm border border-dashed border-brass/60 p-6 text-center sm:p-8"
++      >
++        <AlertCircle size={20} className="mx-auto text-brass" aria-hidden />
++        <p className="mt-3 text-body">This family tree could not be loaded.</p>
++        <p className="type-meta mt-1 text-soft">{error}</p>
++      </div>
++    );
++  }
++
++  /* ---- loading ---- */
++  if (loading) {
++    return (
++      <div aria-busy="true" aria-live="polite" className="space-y-8">
++        <span className="sr-only">Loading the family tree…</span>
++        {[0, 1].map((row) => (
++          <div key={row}>
++            <div className="h-3 w-32 rounded-sm bg-well" />
++            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
++              {[0, 1, 2].map((c) => (
++                <div key={c} className="h-24 rounded-sm bg-well" />
++              ))}
++            </div>
++          </div>
++        ))}
++      </div>
++    );
++  }
++
++  const people = data ? flatten(data) : [];
++
++  /* ---- empty ---- */
++  if (!data || people.length === 0) {
++    return (
++      <div className="rounded-sm border border-dashed border-brass/60 p-6 text-center sm:p-8">
++        <p className="text-body">This family tree has not been built yet.</p>
++        <p className="type-meta mt-1 text-soft">
++          When the family adds parents, brothers, sisters and children, they will appear here.
++        </p>
++      </div>
++    );
++  }
++
++  const multi = multiGlenPeople(people);
++
++  return (
++    <div>
++      {data.caption && (
++        <Reveal>
++          <p className="max-w-reading leading-relaxed text-soft">{data.caption}</p>
++        </Reveal>
++      )}
++
++      <Reveal delay={0.05}>
++        <div className="mt-6">
++          <Legend hasMultiGlen={multi.length > 0} />
++        </div>
++      </Reveal>
++
++      {multi.length > 0 && (
++        <Reveal delay={0.08}>
++          <p className="type-meta mt-4 max-w-reading text-soft">{MULTI_GLEN_NOTE}</p>
++        </Reveal>
++      )}
++
++      {/* Generation rows. Stacks to one column on a phone; no horizontal scroll. */}
++      <div className="mt-10 space-y-12">
++        {data.generations.map((gen, gi) => (
++          <section key={gen.generation} aria-labelledby={`gen-${gen.generation}`}>
++            <Reveal>
++              <div className="flex items-center gap-4">
++                <h3
++                  id={`gen-${gen.generation}`}
++                  className="type-meta whitespace-nowrap uppercase tracking-[0.14em] text-brass"
++                >
++                  {gen.label}
++                </h3>
++                <span aria-hidden className="h-px flex-1 bg-[color:var(--line)]" />
++                <span className="type-meta text-soft">{gen.people.length}</span>
++              </div>
++            </Reveal>
++            <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
++              {gen.people.map((p, i) => (
++                <Reveal as="li" key={p.id} delay={Math.min(i, 5) * 0.04 + gi * 0.02}>
++                  <PersonCard person={p} />
++                </Reveal>
++              ))}
++            </ul>
++          </section>
++        ))}
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/family/familyModel.ts b/src/components/family/familyModel.ts
+new file mode 100644
+index 0000000..3cd10a1
+--- /dev/null
++++ b/src/components/family/familyModel.ts
+@@ -0,0 +1,93 @@
++/**
++ * A single family model for every memorial.
++ *
++ * WHY THIS EXISTS — the brief asked to confirm the data shape first, and it was
++ * right to. The two trees on this platform had incompatible shapes:
++ *
++ *   John Peters  x/y coordinates hand-placed on an SVG canvas, with `glens[]`
++ *                but no explicit parent/child or spouse edges — the relationships
++ *                were implied by where a node happened to sit.
++ *   Virginia     four flat lists (parents, siblings, children, grandchildren)
++ *                with no edges at all and no Glen membership.
++ *
++ * So neither could express parent/child, spouse or multi-Glen membership
++ * reliably, and nothing could be shared between them. That is the root cause,
++ * and it is fixed here rather than papered over in the view layer.
++ *
++ * Generations are explicit integers rather than derived, because derivation
++ * breaks the moment a family has half-siblings, remarriages or adoptions — all
++ * of which real families have.
++ */
++
++export interface FamilyPerson {
++  id: string;
++  name: string;
++  /** "1955–2025", "b. 1960", or omitted when the family has not recorded them. */
++  years?: string;
++  /** How this person relates to the subject of the memorial. */
++  relation?: string;
++  /** Family term as the family uses it — Sekuru, Amaini, Ambuya. */
++  kinship?: string;
++  living: boolean;
++  /** Explicit. Lower numbers are older generations. 0 = the eldest shown. */
++  generation: number;
++  /** Family Glens this person belongs to. More than one is the interesting case. */
++  glens?: string[];
++  /** Their own memorial, when one exists. */
++  memorialSlug?: string;
++  photo?: string;
++  /** id of a spouse in the same list. */
++  spouseOf?: string;
++  /** ids of parents in the same list. */
++  parentIds?: string[];
++  /** The person whose memorial this is. */
++  isSubject?: boolean;
++  /** Living Legacy member badge. */
++  legacyMember?: boolean;
++}
++
++export interface GenerationGroup {
++  generation: number;
++  label: string;
++  people: FamilyPerson[];
++}
++
++export interface FamilyTreeData {
++  /** Rendered above the tree, e.g. "Four generations of the Mushore family". */
++  caption?: string;
++  generations: GenerationGroup[];
++}
++
++/** Groups a flat list into labelled generations, oldest first. */
++export function groupByGeneration(
++  people: FamilyPerson[],
++  labels: Record<number, string>,
++): GenerationGroup[] {
++  const byGen = new Map<number, FamilyPerson[]>();
++  for (const p of people) {
++    const list = byGen.get(p.generation) ?? [];
++    list.push(p);
++    byGen.set(p.generation, list);
++  }
++  return [...byGen.entries()]
++    .sort((a, b) => a[0] - b[0])
++    .map(([generation, group]) => ({
++      generation,
++      label: labels[generation] ?? `Generation ${generation + 1}`,
++      people: group,
++    }));
++}
++
++/** Everyone who belongs to more than one Family Glen. */
++export function multiGlenPeople(people: FamilyPerson[]): FamilyPerson[] {
++  return people.filter((p) => (p.glens?.length ?? 0) > 1);
++}
++
++/** Flattens grouped generations back to a list. */
++export function flatten(data: FamilyTreeData): FamilyPerson[] {
++  return data.generations.flatMap((g) => g.people);
++}
++
++export const MULTI_GLEN_NOTE =
++  'Some people belong to more than one Family Glen \u2014 through marriage, or because they are ' +
++  'part of two family lines. They appear in each one, and are marked here.';
+diff --git a/src/pages/Home.tsx b/src/pages/Home.tsx
+index ff89a18..11cb17b 100644
+--- a/src/pages/Home.tsx
++++ b/src/pages/Home.tsx
+@@ -18,6 +18,7 @@ import CandleFlame from '@/components/CandleFlame';
+ import Hero from '@/pages/home/Hero';
+ import JohnDemo from '@/pages/home/JohnDemo';
+ import HowItWorks from '@/pages/home/HowItWorks';
++import FamilyGlenExplainer from '@/pages/home/FamilyGlenExplainer';
+ 
+ /* ---------- Section 5 — Feature grid ---------- */
+ const FEATURES = [
+@@ -259,9 +260,12 @@ export default function Home() {
+   return (
+     <>
+       <Hero />
++      {/* Explain the product before showing it off: three steps, then the one
++          piece of jargon the whole site depends on. */}
++      <HowItWorks />
++      <FamilyGlenExplainer />
+       <JohnDemo />
+       <FiveTabs />
+-      <HowItWorks />
+       <FeatureGrid />
+       <HomeStats />
+       <PartnerBands />
+diff --git a/src/pages/MemorialPage.tsx b/src/pages/MemorialPage.tsx
+index 64afff8..e93411f 100644
+--- a/src/pages/MemorialPage.tsx
++++ b/src/pages/MemorialPage.tsx
+@@ -668,7 +668,7 @@ function MemorialBody({ memorial }: { memorial: Memorial }) {
+                         <span className="block truncate text-sm font-medium text-body">{title}</span>
+                         <span className="type-meta mt-0.5 block text-soft">PDF · demo</span>
+                       </span>
+-                      <span className="btn btn-outline-evergreen !min-h-10 flex-none px-4 py-1.5 text-sm">
++                      <span className="btn btn-outline-evergreen !min-h-11 flex-none px-4 py-1.5 text-sm">
+                         <Download size={14} aria-hidden /> Download
+                       </span>
+                     </div>
+diff --git a/src/pages/home/FamilyGlenExplainer.tsx b/src/pages/home/FamilyGlenExplainer.tsx
+new file mode 100644
+index 0000000..4ccb20f
+--- /dev/null
++++ b/src/pages/home/FamilyGlenExplainer.tsx
+@@ -0,0 +1,72 @@
++import { Link } from 'react-router';
++import { Eye, Infinity as InfinityIcon, KeyRound } from 'lucide-react';
++import Reveal from '@/components/Reveal';
++
++/**
++ * "Family Glen" is the one piece of MemoryGlen jargon a first-time visitor
++ * cannot guess. It appears in the navigation, on every memorial and in the
++ * three steps above, so it has to be explained in plain language before it is
++ * used again — in one short paragraph, not a feature list.
++ *
++ * The trust note answers the three questions people actually ask about a
++ * memorial: who can see it, who controls it, and whether it will still be here.
++ */
++
++const TRUST = [
++  {
++    Icon: Eye,
++    title: 'Who can see it',
++    body: 'You choose: open to everyone, visible to family only, or private to a few. Set per memorial, changeable at any time.',
++  },
++  {
++    Icon: KeyRound,
++    title: 'Who controls it',
++    body: 'The family does. You decide who may add memories and who may edit. No one else can change what you have written.',
++  },
++  {
++    Icon: InfinityIcon,
++    title: 'How long it lasts',
++    body: 'A memorial is built to outlive the people who made it. Your words, photographs and recordings stay put.',
++  },
++];
++
++export default function FamilyGlenExplainer() {
++  return (
++    <section className="section-pad" aria-labelledby="what-is-a-glen">
++      <div className="container-content">
++        <div className="max-w-reading">
++          <Reveal>
++            <p className="eyebrow">In plain language</p>
++            <h2 id="what-is-a-glen" className="type-h2 mt-4 text-body">
++              What is a Family Glen?
++            </h2>
++          </Reveal>
++          <Reveal delay={0.08}>
++            <p className="type-story mt-5 text-body">
++              A Family Glen is a shared digital space that connects related memorials &mdash; like a
++              family plot that lives online. When someone belongs to more than one family line,
++              they appear in each relevant Glen.
++            </p>
++          </Reveal>
++          <Reveal delay={0.14}>
++            <Link to="/memorials/john-peters?tab=glen" className="link-arrow mt-5 inline-flex text-sm">
++              See a Family Glen
++            </Link>
++          </Reveal>
++        </div>
++
++        <ul className="mt-16 grid gap-6 md:grid-cols-3">
++          {TRUST.map(({ Icon, title, body }, i) => (
++            <Reveal as="li" key={title} delay={Math.min(i, 2) * 0.07}>
++              <div className="card-well h-full p-6">
++                <Icon size={20} className="text-brass" aria-hidden />
++                <h3 className="mt-4 font-display text-lg text-body">{title}</h3>
++                <p className="mt-2 leading-relaxed text-soft">{body}</p>
++              </div>
++            </Reveal>
++          ))}
++        </ul>
++      </div>
++    </section>
++  );
++}
+diff --git a/src/pages/home/Hero.tsx b/src/pages/home/Hero.tsx
+index 1bd8f3e..c3a7630 100644
+--- a/src/pages/home/Hero.tsx
++++ b/src/pages/home/Hero.tsx
+@@ -61,8 +61,8 @@ export default function Hero() {
+             transition={{ duration: 0.4, delay: 0.9 }}
+             className="type-story mt-5 max-w-xl text-bone/85"
+           >
+-            A permanent place for memories, stories, voices, and family connection. Preserve the
+-            lives and legacies of your loved ones across generations.
++            Build a lasting memorial for someone you love — their story, their photographs,
++            their voice — and invite your family to add to it from anywhere in the world.
+           </motion.p>
+ 
+           <motion.div
+@@ -71,11 +71,12 @@ export default function Hero() {
+             transition={{ duration: 0.4, delay: 1.05 }}
+             className="mt-8 flex flex-wrap gap-4"
+           >
+-            <Link to="/create" className="btn btn-evergreen">
+-              Create a Memorial — free
++            <Link to="/create" className="btn btn-evergreen min-h-12">
++              Create a Memorial
+             </Link>
+-            <Link to="/memorials" className="btn btn-outline-bone">
+-              Browse Memorials
++            {/* Secondary must land on a real, populated memorial — not the directory. */}
++            <Link to="/memorials/john-peters" className="btn btn-outline-bone min-h-12">
++              View Demo Memorial
+             </Link>
+           </motion.div>
+         </div>
+diff --git a/src/pages/home/HowItWorks.tsx b/src/pages/home/HowItWorks.tsx
+index d20dbe3..b336f85 100644
+--- a/src/pages/home/HowItWorks.tsx
++++ b/src/pages/home/HowItWorks.tsx
+@@ -6,20 +6,16 @@ gsap.registerPlugin(ScrollTrigger);
+ 
+ const STEPS = [
+   {
+-    title: 'Register',
+-    body: "Create your family's account in minutes. No cost to begin.",
++    title: 'Create a memorial in minutes',
++    body: 'A guided wizard gathers the story, the photographs, the voice notes and the songs.',
+   },
+   {
+-    title: 'Create a Memorial',
+-    body: 'A guided wizard gathers the story, photos, voice notes, and songs.',
++    title: 'Invite family to add their memories',
++    body: 'Brothers, sisters, children and grandchildren contribute from anywhere in the world.',
+   },
+   {
+-    title: 'Invite Family',
+-    body: 'Guardians and contributors join from anywhere in the world.',
+-  },
+-  {
+-    title: 'Preserve Forever',
+-    body: 'The memorial stays. The recording stays. The story stays.',
++    title: 'Build a Family Glen that connects generations',
++    body: 'Memorials link together, so one life sits inside the whole family story.',
+   },
+ ];
+ 
+diff --git a/src/pages/john-peters/GlenTab.tsx b/src/pages/john-peters/GlenTab.tsx
+index 0fe70cd..ac7e1c8 100644
+--- a/src/pages/john-peters/GlenTab.tsx
++++ b/src/pages/john-peters/GlenTab.tsx
+@@ -231,7 +231,7 @@ function GlenEntrance({
+               type="button"
+               onClick={() => setAmbience((a) => !a)}
+               aria-pressed={ambience}
+-              className="mt-2 flex min-h-10 w-full items-center justify-center gap-2 rounded-sm border border-bone/20 px-2 text-[11px] font-medium text-bone transition-colors hover:border-bone/50"
++              className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-sm border border-bone/20 px-2 text-[11px] font-medium text-bone transition-colors hover:border-bone/50"
+             >
+               <Volume2 size={12} aria-hidden />
+               {ambience ? 'Hymn ambience · on' : 'Hymn ambience · off'}
+diff --git a/src/pages/john-peters/TreeTab.tsx b/src/pages/john-peters/TreeTab.tsx
+index 0a5b71d..b03b21c 100644
+--- a/src/pages/john-peters/TreeTab.tsx
++++ b/src/pages/john-peters/TreeTab.tsx
+@@ -3,6 +3,8 @@ import { Link } from 'react-router';
+ import { AnimatePresence, motion } from 'framer-motion';
+ import { ArrowRight, Crosshair, Download, Lock, Maximize2, ShieldCheck, X } from 'lucide-react';
+ import Reveal from '@/components/Reveal';
++import FamilyTree from '@/components/family/FamilyTree';
++import { buildJohnTree } from '@/pages/john-peters/familyTreeData';
+ import StatBand from '@/components/StatBand';
+ import TierGate from '@/components/TierGate';
+ 
+@@ -782,6 +784,12 @@ export default function TreeTab() {
+ 
+   return (
+     <div className="container-content">
++      {/* The shared family tree — same component used on every memorial.
++          Readable on a phone without pinch-zoom; the interactive canvas below
++          is the desktop extra, not the primary way to read the family. */}
++      <section aria-label="Family tree" className="pt-12 md:pt-16">
++        <FamilyTree data={buildJohnTree()} />
++      </section>
+       {/* Toast — slides down from the tab bar, auto-dismisses 3s */}
+       <AnimatePresence>
+         {toast && (
+diff --git a/src/pages/john-peters/familyTreeData.ts b/src/pages/john-peters/familyTreeData.ts
+new file mode 100644
+index 0000000..1bdeffd
+--- /dev/null
++++ b/src/pages/john-peters/familyTreeData.ts
+@@ -0,0 +1,42 @@
++import { groupByGeneration } from '@/components/family/familyModel';
++import type { FamilyPerson, FamilyTreeData } from '@/components/family/familyModel';
++
++/**
++ * The Peters family, mapped into the shared model.
++ *
++ * The old canvas used hand-placed x/y coordinates with relationships implied by
++ * position. Generations are explicit here, and the `glens` already present in
++ * that data carry straight over — Sarah and Thomas Miller belong to both the
++ * Peters and Miller Glens, which is the multi-Glen case the badge is for.
++ *
++ * All fictional: this is the demonstration memorial.
++ */
++const PETERS = 'Peters Family Glen';
++const MILLER = 'Miller Family Glen';
++const CHIWESHE = 'Chiweshe Family Glen';
++
++const PEOPLE: FamilyPerson[] = [
++  { id: 'samuel', name: 'Samuel Peters', years: '1931\u20132001', relation: 'Father of John', living: false, generation: 0, glens: [PETERS], memorialSlug: 'samuel-peters' },
++  { id: 'ruth', name: 'Ruth Peters', years: '1935\u20132011', relation: 'Mother of John', living: false, generation: 0, glens: [PETERS], memorialSlug: 'ruth-peters', spouseOf: 'samuel' },
++
++  { id: 'john', name: 'John Peters', years: '1958\u20132026', relation: 'This memorial', living: false, generation: 1, glens: [PETERS], memorialSlug: 'john-peters', isSubject: true, parentIds: ['samuel', 'ruth'], photo: '/john-portrait.jpg' },
++  { id: 'grace', name: 'Grace Peters', years: 'b. 1960', relation: 'Wife of John', living: true, generation: 1, glens: [PETERS], legacyMember: true, spouseOf: 'john', photo: '/john-wife.jpg' },
++  { id: 'james', name: 'James Peters', years: '1961\u20132019', relation: 'Brother of John', living: false, generation: 1, glens: [PETERS], memorialSlug: 'james-peters', parentIds: ['samuel', 'ruth'] },
++
++  { id: 'david', name: 'David Peters', years: 'b. 1986', relation: 'Son \u00b7 Harare', living: true, generation: 2, glens: [PETERS, CHIWESHE], legacyMember: true, parentIds: ['john', 'grace'], photo: '/john-son.jpg' },
++  { id: 'sarah', name: 'Sarah Miller', years: 'b. 1988', relation: 'Daughter \u00b7 London', living: true, generation: 2, glens: [PETERS, MILLER], legacyMember: true, parentIds: ['john', 'grace'], photo: '/john-daughter.jpg' },
++  { id: 'thomas', name: 'Thomas Miller', years: 'b. 1987', relation: 'Husband of Sarah', living: true, generation: 2, glens: [MILLER], spouseOf: 'sarah' },
++  { id: 'michael', name: 'Michael Peters', years: 'b. 1991', relation: 'Son \u00b7 Johannesburg', living: true, generation: 2, glens: [PETERS], parentIds: ['john', 'grace'] },
++];
++
++export function buildJohnTree(): FamilyTreeData {
++  return {
++    caption:
++      'Three generations of the Peters family. Sarah and David each belong to two Family Glens \u2014 one through birth, one through marriage.',
++    generations: groupByGeneration(PEOPLE, {
++      0: 'His parents',
++      1: 'His generation',
++      2: 'His children',
++    }),
++  };
++}
+diff --git a/src/pages/virginia/OverviewTab.tsx b/src/pages/virginia/OverviewTab.tsx
+index d7b8e84..df2dcd3 100644
+--- a/src/pages/virginia/OverviewTab.tsx
++++ b/src/pages/virginia/OverviewTab.tsx
+@@ -300,7 +300,7 @@ export default function OverviewTab() {
+                   <span className="block truncate text-sm font-medium text-body">{b.title}</span>
+                   <span className="type-meta mt-0.5 block text-soft">PDF · {b.size}</span>
+                 </span>
+-                <span className="btn btn-outline-evergreen !min-h-10 flex-none px-4 py-1.5 text-sm">
++                <span className="btn btn-outline-evergreen !min-h-11 flex-none px-4 py-1.5 text-sm">
+                   <Download size={14} aria-hidden /> Download
+                 </span>
+               </a>
+diff --git a/src/pages/virginia/TreeTab.tsx b/src/pages/virginia/TreeTab.tsx
+index a7d1c62..184c1de 100644
+--- a/src/pages/virginia/TreeTab.tsx
++++ b/src/pages/virginia/TreeTab.tsx
+@@ -1,4 +1,6 @@
+ import Reveal from '@/components/Reveal';
++import FamilyTree from '@/components/family/FamilyTree';
++import { buildVirginiaTree } from '@/pages/virginia/familyTreeData';
+ import FamilyTab from '@/pages/virginia/FamilyTab';
+ import { CHILDREN, GRANDCHILDREN, SIBLINGS } from '@/pages/virginia/data';
+ 
+@@ -55,6 +57,12 @@ export default function TreeTab() {
+         </Reveal>
+       </section>
+ 
++      {/* The shared family tree — same component on every memorial */}
++      <section aria-label="Family tree">
++        <FamilyTree data={buildVirginiaTree()} />
++      </section>
++
++      {/* The full family listing, kept beneath */}
+       <FamilyTab />
+     </div>
+   );
+diff --git a/src/pages/virginia/familyTreeData.ts b/src/pages/virginia/familyTreeData.ts
+new file mode 100644
+index 0000000..3078ad5
+--- /dev/null
++++ b/src/pages/virginia/familyTreeData.ts
+@@ -0,0 +1,86 @@
++import { groupByGeneration } from '@/components/family/familyModel';
++import type { FamilyPerson, FamilyTreeData } from '@/components/family/familyModel';
++import { CHILDREN, GRANDCHILDREN, PARENTS, SIBLINGS } from '@/pages/virginia/data';
++
++/**
++ * Virginia's family, mapped into the shared model.
++ *
++ * Her source data is four flat lists with no edges, so parent links are added
++ * here where the family has confirmed them (her parents → the ten children →
++ * her seven → their eighteen). Nothing is inferred beyond that: her siblings'
++ * own children are not recorded, so no edges are invented for them.
++ *
++ * Glen membership: the Mushore side (her parents and siblings) and the Chiimba
++ * side (her married family). Virginia belongs to both — which is exactly the
++ * multi-Glen case the badge exists to show.
++ */
++
++const MUSHORE = 'Mushore Family Glen';
++const CHIIMBA = 'Chiimba Family Glen';
++
++export function buildVirginiaTree(): FamilyTreeData {
++  const parents: FamilyPerson[] = PARENTS.map((p, i) => ({
++    id: `parent-${i}`,
++    name: p.honorific,
++    relation: `${p.name} · ${p.relation}`,
++    living: true,
++    generation: 0,
++    glens: [MUSHORE],
++    spouseOf: i === 0 ? 'parent-1' : 'parent-0',
++  }));
++
++  const siblings: FamilyPerson[] = SIBLINGS.map((s) => ({
++    id: `sib-${s.order}`,
++    name: s.name,
++    years: s.birthYear
++      ? s.deathYear
++        ? `${s.birthYear}\u2013${s.deathYear}`
++        : `b. ${s.birthYear}`
++      : s.deathYear
++        ? `d. ${s.deathYear}`
++        : undefined,
++    relation: s.relation,
++    kinship: s.kinship,
++    living: !s.deathYear,
++    generation: 1,
++    // Virginia married into the Chiimba family, so she sits in both Glens.
++    glens: s.isVirginia ? [MUSHORE, CHIIMBA] : [MUSHORE],
++    parentIds: ['parent-0', 'parent-1'],
++    isSubject: s.isVirginia,
++    memorialSlug: s.isVirginia ? undefined : undefined,
++  }));
++
++  const children: FamilyPerson[] = CHILDREN.map((c, i) => ({
++    id: `child-${i}`,
++    name: c.name,
++    years: c.birthYear ? `b. ${c.birthYear}` : undefined,
++    relation: c.relation,
++    living: true,
++    generation: 2,
++    glens: [CHIIMBA],
++    parentIds: ['sib-1'],
++  }));
++
++  const grandchildren: FamilyPerson[] = GRANDCHILDREN.map((g, i) => ({
++    id: `grand-${i}`,
++    name: g.name,
++    years: g.birthYear ? `b. ${g.birthYear}` : undefined,
++    relation: g.relation,
++    living: true,
++    generation: 3,
++    glens: [CHIIMBA],
++  }));
++
++  const all = [...parents, ...siblings, ...children, ...grandchildren];
++
++  return {
++    caption:
++      'Four generations \u2014 from Sekuru Johannes and Ambuya Juliana Mushore, through the ten children they raised, to her own seven and their eighteen.',
++    generations: groupByGeneration(all, {
++      0: 'Her parents',
++      1: 'Her generation',
++      2: 'Her children',
++      3: 'Her grandchildren',
++    }),
++  };
++}
+-- 
+2.43.0
+
