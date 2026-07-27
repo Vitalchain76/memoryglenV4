@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Camera, Globe, Lock, Users, ImagePlus, X } from 'lucide-react';
 import { CandleFlame } from '@/components/CandleFlame';
+import { useAuth } from '@/lib/useAuth';
+import { createMemorial, uploadMedia } from '@/lib/memorialsApi';
 import { cn } from '@/lib/utils';
 
 /* ------------------------------------------------------------------ */
@@ -119,6 +121,10 @@ export default function Create() {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [candleLit, setCandleLit] = useState(false);
   const [ritual, setRitual] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [createdSlug, setCreatedSlug] = useState<string | null>(null);
+  const { user } = useAuth();
   const reduceMotion = useReducedMotion();
   const navigate = useNavigate();
   const storyRef = useRef<HTMLTextAreaElement>(null);
@@ -197,7 +203,60 @@ export default function Create() {
     });
   };
 
-  const lightFirstCandle = () => {
+  /**
+   * Save the memorial, then run the candle ritual.
+   *
+   * The ritual is the commit point: everything before it is a local draft, and
+   * this is the moment the family's page actually comes into being. The write
+   * happens first so a failure surfaces before the ceremony rather than after.
+   */
+  const lightFirstCandle = async () => {
+    if (!user) {
+      setPublishError('Please sign in first so this page is saved to your account.');
+      return;
+    }
+    if (publishing) return;
+
+    setPublishError(null);
+    setPublishing(true);
+
+    const { memorial, error } = await createMemorial(user.id, {
+      fullName,
+      bornOn: draft.birthDate || null,
+      diedOn: draft.passingDate || null,
+      restingPlace: draft.restingPlace || null,
+      story: draft.story || null,
+      consentGiven: true,
+      publish: draft.privacy === 'public',
+    });
+
+    if (error || !memorial) {
+      setPublishing(false);
+      setPublishError(error ?? 'The page could not be saved. Please try again.');
+      return;
+    }
+
+    // The portrait was held as a data URL in the draft; move it into storage.
+    // A failure here must not block the memorial itself — they can add it later.
+    if (draft.photoDataUrl) {
+      try {
+        const blob = await (await fetch(draft.photoDataUrl)).blob();
+        const file = new File([blob], 'portrait.jpg', { type: blob.type || 'image/jpeg' });
+        await uploadMedia(memorial.id, user.id, file, 'Portrait');
+      } catch {
+        /* portrait can be added later */
+      }
+    }
+
+    setCreatedSlug(memorial.slug);
+    setPublishing(false);
+
+    try {
+      window.localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+
     setRitual(true);
     window.setTimeout(
       () => {
@@ -642,19 +701,36 @@ export default function Create() {
                 <p className="type-story mt-10 text-body">Their page is ready.</p>
                 <div className="mt-6 flex flex-col items-center gap-3">
                   {!candleLit ? (
-                    <button type="button" onClick={lightFirstCandle} className="btn btn-evergreen min-h-12 px-8">
+                    <button
+                      type="button"
+                      onClick={() => void lightFirstCandle()}
+                      disabled={publishing}
+                      className="btn btn-evergreen min-h-12 px-8 disabled:opacity-60"
+                    >
                       <CandleFlame size={14} lit={false} />
-                      Light the first candle
+                      {publishing ? 'Saving their page…' : 'Light the first candle'}
                     </button>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => navigate('/memorials')}
+                      onClick={() =>
+                        navigate(createdSlug ? `/memorials/${createdSlug}` : '/memorials')
+                      }
                       className="btn btn-evergreen min-h-12 px-8"
                     >
                       Visit their page
                       <ArrowRight size={16} aria-hidden />
                     </button>
+                  )}
+                  {publishError && (
+                    <p role="alert" className="max-w-sm text-sm text-clay">
+                      {publishError}{' '}
+                      {!user && (
+                        <Link to="/signin" className="font-medium text-evergreen underline">
+                          Sign in
+                        </Link>
+                      )}
+                    </p>
                   )}
                   <button
                     type="button"

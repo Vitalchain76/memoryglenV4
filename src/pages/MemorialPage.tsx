@@ -9,6 +9,7 @@ import QRShareBlock from '@/components/QRShareBlock';
 import Reveal from '@/components/Reveal';
 import ServiceProviderRail from '@/components/ServiceProviderRail';
 import MemorialTabShell from '@/components/MemorialTabShell';
+import UserMemorial from '@/pages/UserMemorial';
 import { buildStandardTabs } from '@/components/memorialStandard';
 import type { RoomSpec } from '@/components/memorialStandard';
 import FamilyTree from '@/components/family/FamilyTree';
@@ -348,8 +349,12 @@ export default function MemorialPage() {
   const { slug } = useParams();
   const memorial = getMemorial(slug);
 
-  // Unknown slug (and never the two template slugs) → the public directory.
-  if (!memorial) return <Navigate to="/memorials" replace />;
+  // Not in the static dataset → it may be a memorial a family created, which
+  // lives in the database. UserMemorial handles its own not-found state.
+  if (!memorial) {
+    if (!slug) return <Navigate to="/memorials" replace />;
+    return <UserMemorial key={slug} slug={slug} />;
+  }
 
   // A real person whose page the family has not yet written.
   if (memorial.awaitingContent) {
