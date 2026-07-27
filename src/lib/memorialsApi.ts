@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { sanitiseImage } from '@/lib/imageSanitiser';
 
 /**
  * Data access for database-backed memorials.
@@ -10,6 +11,8 @@ import { supabase } from '@/lib/supabase';
 
 export const MEDIA_BUCKET = 'memorial-media';
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+/** Threat T-09: per-memorial ceiling on stored photographs. */
+export const MAX_MEDIA_PER_MEMORIAL = 300;
 export const ALLOWED_IMAGE_TYPES = [
   'image/jpeg',
   'image/png',
@@ -178,12 +181,32 @@ export async function uploadMedia(
     return { error: `That photo is ${mb} MB. Please use one under 10 MB.` };
   }
 
-  const ext = (file.name.split('.').pop() ?? 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const path = `${memorialId}/${crypto.randomUUID()}.${ext}`;
+  // Threat T-09: storage abuse. The bucket's size ceiling caps a single file;
+  // this caps the total. Enforced again in the database by a trigger, since
+  // anything checked only in the browser is advisory.
+  const { count } = await supabase
+    .from('memorial_media')
+    .select('id', { count: 'exact', head: true })
+    .eq('memorial_id', memorialId);
+  if ((count ?? 0) >= MAX_MEDIA_PER_MEMORIAL) {
+    return {
+      error: `This memorial has reached ${MAX_MEDIA_PER_MEMORIAL} photographs. Please remove one before adding another.`,
+    };
+  }
+
+  // Threat T-08: strip EXIF/GPS before the file ever leaves the device.
+  let clean: File;
+  try {
+    clean = await sanitiseImage(file);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'That image could not be prepared.' };
+  }
+
+  const path = `${memorialId}/${crypto.randomUUID()}.jpg`;
 
   const { error: uploadError } = await supabase.storage
     .from(MEDIA_BUCKET)
-    .upload(path, file, { cacheControl: '3600', upsert: false });
+    .upload(path, clean, { cacheControl: '3600', upsert: false, contentType: 'image/jpeg' });
 
   if (uploadError) return { error: uploadError.message };
 
@@ -195,7 +218,7 @@ export async function uploadMedia(
       storage_path: path,
       kind: 'image',
       caption: caption?.trim() || null,
-      bytes: file.size,
+      bytes: clean.size,
     })
     .select()
     .single();
