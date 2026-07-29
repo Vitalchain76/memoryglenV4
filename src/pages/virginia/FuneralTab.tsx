@@ -2,11 +2,30 @@ import { CalendarDays, Clock, Download, Globe, MapPin } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import VideoFacade from '@/pages/virginia/VideoFacade';
 import { FUNERAL_EVENT, SERVICE_VIDEOS } from '@/pages/virginia/data';
+import LiveStreamTab from '@/components/memorial/LiveStreamTab';
+import type { LiveStreamConfig } from '@/components/memorial/LiveStreamTab';
 
 /** TAB: Funeral — "Funeral & Memorial Events" (virginia.md). */
+/**
+ * Live-stream config for Virginia's memorial. Her service has already taken
+ * place, so the standardised module renders in its archived 'ended' state.
+ * A recording id can be added later; until then the player shows a graceful
+ * placeholder rather than an unrelated video.
+ */
+const VIRGINIA_STREAM_CONFIG: LiveStreamConfig = {
+  name: 'Virginia Dadirayi Chiimba',
+  status: 'ended',
+  streamInstructions:
+    'The service was streamed live for family who could not travel to Seke. The recording is kept here for all who wish to remember the day.',
+};
+
 export default function FuneralTab() {
   return (
     <div>
+      <section className="mb-16 border-b border-[color:var(--line)] pb-16 md:mb-24 md:pb-24">
+        <LiveStreamTab config={VIRGINIA_STREAM_CONFIG} />
+      </section>
+
       <Reveal>
         <p className="eyebrow">In her honour</p>
         <h2 className="type-h2 mt-4 text-body">Funeral &amp; Memorial Events</h2>
