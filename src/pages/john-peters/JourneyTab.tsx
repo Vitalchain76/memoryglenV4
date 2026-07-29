@@ -5,6 +5,9 @@ import { Check, Download } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import LiveStreamTab from '@/components/memorial/LiveStreamTab';
 import type { LiveStreamConfig } from '@/components/memorial/LiveStreamTab';
+import FuneralNoticeCard from '@/components/memorial/FuneralNoticeCard';
+import FamilyFinanceTracker from '@/components/memorial/FamilyFinanceTracker';
+import AnniversaryChatRoom from '@/components/memorial/AnniversaryChatRoom';
 import StatBand from '@/components/StatBand';
 import NotificationCard from '@/components/NotificationCard';
 import ServiceProviderRail from '@/components/ServiceProviderRail';
@@ -488,6 +491,36 @@ function ClosingCTA() {
   );
 }
 
+/* ---------- Section 6 — Family Notice, Finance & Anniversary Chat ---------- */
+/**
+ * Standardised B2B feature modules driven from the memorial slug. Wired into
+ * the demo memorial so partners can walk through GPS directions, the family
+ * contribution tracker and the real-time anniversary gathering room.
+ */
+function FamilyFeatures() {
+  return (
+    <section id="jp-family-features" className="section-pad scroll-mt-36">
+      <div className="flex flex-col gap-12">
+        <Reveal>
+          <FuneralNoticeCard
+            venueName="Harare Memorial Chapel"
+            address="Harare, Zimbabwe"
+            latitude={-17.8292}
+            longitude={31.0522}
+            serviceDate="2026-07-31T10:00:00+02:00"
+          />
+        </Reveal>
+        <Reveal delay={0.05}>
+          <FamilyFinanceTracker memorialSlug="john-peters" />
+        </Reveal>
+        <Reveal delay={0.1}>
+          <AnniversaryChatRoom memorialSlug="john-peters" />
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 /* ---------- Tab ---------- */
 export default function JourneyTab() {
   return (
@@ -498,6 +531,7 @@ export default function JourneyTab() {
         <SupportFund />
         <Livestream />
         <Booklet />
+        <FamilyFeatures />
         <ClosingCTA />
       </div>
       <ServiceProviderRail providers={RAIL_PROVIDERS} className="mt-24" belowStickyTabs />
