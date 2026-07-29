@@ -18,6 +18,8 @@ import Plans from '@/pages/Plans';
 import ServiceProviders from '@/pages/ServiceProviders';
 import Create from '@/pages/Create';
 import NotFoundPage from '@/pages/NotFoundPage';
+import { WhiteLabelProvider } from '@/context/WhiteLabelContext';
+import NyaradzoPortalHeader from '@/components/partner/NyaradzoPortalHeader';
 
 /**
  * Pattern A (children): Layout renders `{children}` and wraps <Routes>.
@@ -25,39 +27,42 @@ import NotFoundPage from '@/pages/NotFoundPage';
  */
 export default function App() {
   return (
-    <AuthProvider>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/memorials" element={<Memorials />} />
-          <Route path="/memorials/virginia-dadirayi-chiimba" element={<MemorialVirginia />} />
-          <Route path="/memorials/john-peters" element={<JohnPetersMemorial />} />
-          {/* Every other slug falls back to the content-pack dataset.
-              Declared AFTER the two template routes so they always win. */}
-          <Route path="/memorials/:slug" element={<MemorialPage />} />
-          {/* Accounts. Memorial routes above stay public and ungated. */}
-          {/* Auth. Aliases exist because people type /login and /signup, and a
-              404 (or worse, the catch-all) at that moment loses the user. */}
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/login" element={<SignIn />} />
-          <Route path="/sign-in" element={<SignIn />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/signup" element={<Register />} />
-          <Route path="/sign-up" element={<Register />} />
-          <Route path="/create-account" element={<Register />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/themes" element={<Themes />} />
-          <Route path="/funeral-parlours" element={<FuneralParlours />} />
-          <Route path="/funeral-parlours/register" element={<Navigate to="/funeral-parlours" replace />} />
-          <Route path="/burial-societies" element={<BurialSocieties />} />
-          <Route path="/plans" element={<Plans />} />
-          <Route path="/service-providers" element={<ServiceProviders />} />
-          <Route path="/create" element={<Create />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </Layout>
-    </AuthProvider>
+    <WhiteLabelProvider>
+      <NyaradzoPortalHeader />
+      <AuthProvider>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/memorials" element={<Memorials />} />
+            <Route path="/memorials/virginia-dadirayi-chiimba" element={<MemorialVirginia />} />
+            <Route path="/memorials/john-peters" element={<JohnPetersMemorial />} />
+            {/* Every other slug falls back to the content-pack dataset.
+                Declared AFTER the two template routes so they always win. */}
+            <Route path="/memorials/:slug" element={<MemorialPage />} />
+            {/* Accounts. Memorial routes above stay public and ungated. */}
+            {/* Auth. Aliases exist because people type /login and /signup, and a
+                404 (or worse, the catch-all) at that moment loses the user. */}
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/login" element={<SignIn />} />
+            <Route path="/sign-in" element={<SignIn />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/signup" element={<Register />} />
+            <Route path="/sign-up" element={<Register />} />
+            <Route path="/create-account" element={<Register />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/themes" element={<Themes />} />
+            <Route path="/funeral-parlours" element={<FuneralParlours />} />
+            <Route path="/funeral-parlours/register" element={<Navigate to="/funeral-parlours" replace />} />
+            <Route path="/burial-societies" element={<BurialSocieties />} />
+            <Route path="/plans" element={<Plans />} />
+            <Route path="/service-providers" element={<ServiceProviders />} />
+            <Route path="/create" element={<Create />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Layout>
+      </AuthProvider>
+    </WhiteLabelProvider>
   );
 }
