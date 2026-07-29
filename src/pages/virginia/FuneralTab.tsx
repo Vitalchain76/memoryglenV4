@@ -4,6 +4,9 @@ import VideoFacade from '@/pages/virginia/VideoFacade';
 import { FUNERAL_EVENT, SERVICE_VIDEOS } from '@/pages/virginia/data';
 import LiveStreamTab from '@/components/memorial/LiveStreamTab';
 import type { LiveStreamConfig } from '@/components/memorial/LiveStreamTab';
+import FuneralNoticeCard from '@/components/memorial/FuneralNoticeCard';
+import FamilyFinanceTracker from '@/components/memorial/FamilyFinanceTracker';
+import AnniversaryChatRoom from '@/components/memorial/AnniversaryChatRoom';
 
 /** TAB: Funeral — "Funeral & Memorial Events" (virginia.md). */
 /**
@@ -25,6 +28,17 @@ export default function FuneralTab() {
       <section className="mb-16 border-b border-[color:var(--line)] pb-16 md:mb-24 md:pb-24">
         <LiveStreamTab config={VIRGINIA_STREAM_CONFIG} />
       </section>
+
+      {/* Funeral notice with one-tap GPS directions */}
+      <Reveal>
+        <FuneralNoticeCard
+          venueName="Mushore Memorial Park"
+          address="Ziko Shopping Centre, Seke Communal Lands, Zimbabwe"
+          latitude={-18.0542}
+          longitude={31.1215}
+          serviceDate="2025-10-25T10:30:00+02:00"
+        />
+      </Reveal>
 
       <Reveal>
         <p className="eyebrow">In her honour</p>
@@ -87,6 +101,20 @@ export default function FuneralTab() {
           </Reveal>
         ))}
       </ul>
+
+      {/* Family contributions tracker */}
+      <Reveal delay={0.05}>
+        <div className="mt-16">
+          <FamilyFinanceTracker memorialSlug="virginia-dadirayi-chiimba" />
+        </div>
+      </Reveal>
+
+      {/* Anniversary gathering room */}
+      <Reveal delay={0.1}>
+        <div className="mt-16">
+          <AnniversaryChatRoom memorialSlug="virginia-dadirayi-chiimba" />
+        </div>
+      </Reveal>
     </div>
   );
 }
