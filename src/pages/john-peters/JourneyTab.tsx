@@ -8,6 +8,7 @@ import type { LiveStreamConfig } from '@/components/memorial/LiveStreamTab';
 import FuneralNoticeCard from '@/components/memorial/FuneralNoticeCard';
 import FamilyFinanceTracker from '@/components/memorial/FamilyFinanceTracker';
 import AnniversaryChatRoom from '@/components/memorial/AnniversaryChatRoom';
+import MemorialAccessGate from '@/components/auth/MemorialAccessGate';
 import StatBand from '@/components/StatBand';
 import NotificationCard from '@/components/NotificationCard';
 import ServiceProviderRail from '@/components/ServiceProviderRail';
@@ -500,23 +501,25 @@ function ClosingCTA() {
 function FamilyFeatures() {
   return (
     <section id="jp-family-features" className="section-pad scroll-mt-36">
-      <div className="flex flex-col gap-12">
-        <Reveal>
-          <FuneralNoticeCard
-            venueName="Harare Memorial Chapel"
-            address="Harare, Zimbabwe"
-            latitude={-17.8292}
-            longitude={31.0522}
-            serviceDate="2026-07-31T10:00:00+02:00"
-          />
-        </Reveal>
-        <Reveal delay={0.05}>
-          <FamilyFinanceTracker memorialSlug="john-peters" />
-        </Reveal>
-        <Reveal delay={0.1}>
-          <AnniversaryChatRoom memorialSlug="john-peters" />
-        </Reveal>
-      </div>
+      <MemorialAccessGate memorialSlug="john-peters" memorialName="John Peters">
+        <div className="flex flex-col gap-12">
+          <Reveal>
+            <FuneralNoticeCard
+              venueName="Harare Memorial Chapel"
+              address="Harare, Zimbabwe"
+              latitude={-17.8292}
+              longitude={31.0522}
+              serviceDate="2026-07-31T10:00:00+02:00"
+            />
+          </Reveal>
+          <Reveal delay={0.05}>
+            <FamilyFinanceTracker memorialSlug="john-peters" />
+          </Reveal>
+          <Reveal delay={0.1}>
+            <AnniversaryChatRoom memorialSlug="john-peters" />
+          </Reveal>
+        </div>
+      </MemorialAccessGate>
     </section>
   );
 }
