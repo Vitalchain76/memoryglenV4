@@ -1,8 +1,10 @@
 import { useRef } from 'react';
 import { Link } from 'react-router';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Check, Download, Play } from 'lucide-react';
+import { Check, Download } from 'lucide-react';
 import Reveal from '@/components/Reveal';
+import LiveStreamTab from '@/components/memorial/LiveStreamTab';
+import type { LiveStreamConfig } from '@/components/memorial/LiveStreamTab';
 import StatBand from '@/components/StatBand';
 import NotificationCard from '@/components/NotificationCard';
 import ServiceProviderRail from '@/components/ServiceProviderRail';
@@ -399,64 +401,25 @@ function SupportFund() {
 }
 
 /* ---------- Section 4 — Burial Service Livestream ---------- */
+/**
+ * Standardised live-streaming module. For this demo memorial the service is
+ * configured as 'upcoming' so the countdown clock is visible for partner
+ * walkthroughs; every memorial page can drive the same component from its own
+ * stream config.
+ */
+const JP_STREAM_CONFIG: LiveStreamConfig = {
+  name: 'John Peters',
+  status: 'upcoming',
+  youtubeLiveId: 'xFXvaqHGtmM',
+  scheduledStreamTime: '2026-07-31T10:00:00+02:00',
+  streamInstructions:
+    'Live funeral service broadcasting from Harare Chapel. Please join us 15 minutes before the start time.',
+};
+
 function Livestream() {
   return (
     <section id="jp-livestream" className="section-pad scroll-mt-36" aria-labelledby="live-heading">
-      <div className="rounded-sm bg-forest-deep p-6 text-bone sm:p-10">
-        <Reveal>
-          <h2 id="live-heading" className="type-h3 text-bone">
-            Live Funeral Service — John Peters.
-          </h2>
-        </Reveal>
-        <Reveal delay={0.08}>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-sage">
-            10 August 2026, 11:00 AM CAT · Glen Forest Memorial Park, Harare. Streamed live to
-            family in London, Johannesburg, and Toronto. 247 family members and friends watched. 34
-            left virtual candles.
-          </p>
-        </Reveal>
-        <Reveal delay={0.16}>
-          <button
-            type="button"
-            aria-label="Watch the funeral service recording"
-            className="group relative mt-8 block aspect-video w-full overflow-hidden rounded-sm"
-          >
-            <img
-              src="/john-community.jpg"
-              alt="The congregation gathered for the service"
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-            <span className="absolute inset-0 bg-forest-deep/45 transition-colors duration-200 group-hover:bg-forest-deep/30" />
-            <span className="absolute inset-0 flex items-center justify-center">
-              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-evergreen text-bone transition-transform duration-200 group-hover:scale-[1.04]">
-                <Play size={22} className="ml-1" aria-hidden />
-              </span>
-            </span>
-          </button>
-        </Reveal>
-        <Reveal delay={0.2}>
-          <p className="mt-5 font-display text-lg italic text-brass">
-            “Recording stays in the family hub forever.”
-          </p>
-        </Reveal>
-        <Reveal delay={0.24}>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button type="button" className="btn btn-evergreen min-h-12 px-5 text-sm">
-              Watch Recording
-            </button>
-            <button type="button" className="btn btn-outline-bone min-h-12 px-5 text-sm">
-              Light a Candle
-            </button>
-            <button type="button" className="btn btn-outline-bone min-h-12 px-5 text-sm">
-              Download Programme
-            </button>
-          </div>
-          <p className="mt-4 text-xs text-sage">
-            During the service, Sarah's message from London was read aloud at the graveside.
-          </p>
-        </Reveal>
-      </div>
+      <LiveStreamTab config={JP_STREAM_CONFIG} />
     </section>
   );
 }
