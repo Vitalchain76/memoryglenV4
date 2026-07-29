@@ -17,6 +17,7 @@ import BurialSocieties from '@/pages/BurialSocieties';
 import Plans from '@/pages/Plans';
 import ServiceProviders from '@/pages/ServiceProviders';
 import Create from '@/pages/Create';
+import NotFoundPage from '@/pages/NotFoundPage';
 
 /**
  * Pattern A (children): Layout renders `{children}` and wraps <Routes>.
@@ -31,10 +32,10 @@ export default function App() {
           <Route path="/memorials" element={<Memorials />} />
           <Route path="/memorials/virginia-dadirayi-chiimba" element={<MemorialVirginia />} />
           <Route path="/memorials/john-peters" element={<JohnPetersMemorial />} />
-        {/* Every other slug falls back to the content-pack dataset.
-            Declared AFTER the two template routes so they always win. */}
+          {/* Every other slug falls back to the content-pack dataset.
+              Declared AFTER the two template routes so they always win. */}
           <Route path="/memorials/:slug" element={<MemorialPage />} />
-        {/* Accounts. Memorial routes above stay public and ungated. */}
+          {/* Accounts. Memorial routes above stay public and ungated. */}
           {/* Auth. Aliases exist because people type /login and /signup, and a
               404 (or worse, the catch-all) at that moment loses the user. */}
           <Route path="/signin" element={<SignIn />} />
@@ -54,7 +55,7 @@ export default function App() {
           <Route path="/plans" element={<Plans />} />
           <Route path="/service-providers" element={<ServiceProviders />} />
           <Route path="/create" element={<Create />} />
-          <Route path="*" element={<Memorials />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Layout>
     </AuthProvider>
