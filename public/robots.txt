@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Allow: /memorials/
+
+Sitemap: https://www.memoryglen.com/sitemap.xml
