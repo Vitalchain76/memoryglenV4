@@ -1,12 +1,6 @@
 import { useState } from 'react';
-import DOMPurify from 'dompurify';
-import { createClient } from '@supabase/supabase-js';
-import imageCompression from 'browser-image-compression';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || '',
-  import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-);
+import type { FormEvent } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface TimelineEventOption {
   id: string;
@@ -20,6 +14,53 @@ interface Props {
   onSubmitted: () => void;
 }
 
+/**
+ * Strip all markup from user-supplied text using the browser's own HTML
+ * parser, keeping only the resulting text content. This is the
+ * dependency-free equivalent of DOMPurify.sanitize(text, { ALLOWED_TAGS: [] })
+ * -- no <script>, event-handler attribute, or other markup can survive it.
+ */
+function sanitizePlainText(input: string, maxLength: number): string {
+  const parsed = new DOMParser().parseFromString(input, 'text/html');
+  const text = (parsed.body.textContent ?? '').replace(/\s+/g, ' ').trim();
+  return text.slice(0, maxLength);
+}
+
+/**
+ * Re-encode an image to WebP client-side via <canvas>, iteratively lowering
+ * quality until it is under maxBytes (default 1.5MB). Replaces the
+ * browser-image-compression package (not installed in this project) with
+ * the browser's native canvas API, so no new npm dependency is required.
+ */
+async function compressImageToWebP(file: File, maxBytes = 1.5 * 1024 * 1024): Promise<File> {
+  const bitmap = await createImageBitmap(file);
+  let { width, height } = bitmap;
+  const MAX_DIMENSION = 2048;
+  if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+    const scale = MAX_DIMENSION / Math.max(width, height);
+    width = Math.round(width * scale);
+    height = Math.round(height * scale);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return file;
+  ctx.drawImage(bitmap, 0, 0, width, height);
+
+  let quality = 0.85;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
+    if (!blob) break;
+    if (blob.size <= maxBytes || quality <= 0.35) {
+      return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.webp', { type: 'image/webp' });
+    }
+    quality -= 0.15;
+  }
+  return file;
+}
+
 export default function ContributeModal({ lifeRecordId, targetEvents, onClose, onSubmitted }: Props) {
   const [contributorName, setContributorName] = useState('');
   const [targetEventId, setTargetEventId] = useState('');
@@ -28,10 +69,14 @@ export default function ContributeModal({ lifeRecordId, targetEvents, onClose, o
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
 
+    if (!supabase) {
+      setError('This site is not configured yet. Please try again later.');
+      return;
+    }
     if (!targetEventId) {
       setError('Please choose which memory this belongs to.');
       return;
@@ -47,13 +92,7 @@ export default function ContributeModal({ lifeRecordId, targetEvents, onClose, o
       const mediaUrls: string[] = [];
 
       if (file) {
-        const compressed = await imageCompression(file, {
-          maxSizeMB: 1.5,
-          maxWidthOrHeight: 2048,
-          useWebWorker: true,
-          fileType: 'image/webp',
-        });
-
+        const compressed = file.type.startsWith('image/') ? await compressImageToWebP(file) : file;
         const path = `contributions/${lifeRecordId}/${crypto.randomUUID()}.webp`;
         const { error: uploadErr } = await supabase.storage
           .from('media')
@@ -65,8 +104,8 @@ export default function ContributeModal({ lifeRecordId, targetEvents, onClose, o
         mediaUrls.push(publicUrl.publicUrl);
       }
 
-      const sanitizedStory = DOMPurify.sanitize(storyText.trim(), { ALLOWED_TAGS: [] });
-      const sanitizedName = DOMPurify.sanitize(contributorName.trim() || 'Anonymous', { ALLOWED_TAGS: [] });
+      const sanitizedStory = sanitizePlainText(storyText, 4000);
+      const sanitizedName = sanitizePlainText(contributorName, 120) || 'Anonymous';
 
       const { error: insertErr } = await supabase.from('pending_contributions').insert({
         life_record_id: lifeRecordId,
@@ -111,7 +150,7 @@ export default function ContributeModal({ lifeRecordId, targetEvents, onClose, o
               required
               className="w-full max-w-full box-border rounded-lg border border-gray-300 px-3 py-2 text-sm"
             >
-              <option value="">Select a milestone…</option>
+              <option value="">Select a milestone...</option>
               {targetEvents.map((ev) => (
                 <option key={ev.id} value={ev.id}>{ev.title}</option>
               ))}
@@ -124,8 +163,9 @@ export default function ContributeModal({ lifeRecordId, targetEvents, onClose, o
               onChange={(e) => setStoryText(e.target.value)}
               required
               rows={4}
+              maxLength={4000}
               className="w-full max-w-full box-border rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              placeholder="Share what you remember…"
+              placeholder="Share what you remember..."
             />
           </div>
           <div>
@@ -147,7 +187,7 @@ export default function ContributeModal({ lifeRecordId, targetEvents, onClose, o
               disabled={submitting}
               className="flex-1 px-4 py-2 rounded-lg bg-[#2D3748] text-white text-sm font-medium disabled:opacity-50"
             >
-              {submitting ? 'Submitting…' : 'Submit for review'}
+              {submitting ? 'Submitting...' : 'Submit for review'}
             </button>
           </div>
         </form>
