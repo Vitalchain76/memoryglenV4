@@ -12,6 +12,11 @@
 // server-side (Supabase Edge Function or serverless endpoint), NOT in the
 // Vite client bundle. Reads UPSTASH_REDIS_REST_URL / _TOKEN from the server
 // environment -- these must never be prefixed VITE_/NEXT_PUBLIC_.
+//
+// This file is type-checked as part of the Vite app's tsconfig (which only
+// declares "vite/client" types, not Node's), so `process` is declared
+// locally below rather than assuming @types/node is present.
+declare const process: { env: Record<string, string | undefined> };
 
 function upstashConfig(): { url: string; token: string } {
   const url = process.env.UPSTASH_REDIS_REST_URL;
