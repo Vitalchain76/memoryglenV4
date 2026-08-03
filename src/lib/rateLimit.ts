@@ -1,45 +1,87 @@
 // src/lib/rateLimit.ts
 //
-// Hardened Upstash Redis rate limiter (shared by LivingGlen + MemoryGlen).
-// RUNTIME NOTE: uses the Web Request/Response API; intended to run server-side
-// (Supabase Edge Function or serverless endpoint), NOT in the Vite client bundle.
-// Redis.fromEnv() reads UPSTASH_REDIS_REST_URL / _TOKEN from the server env.
+// Hardened rate limiter (shared by LivingGlen + MemoryGlen), backed
+// directly by the Upstash Redis REST API via fetch. This repo's
+// package.json does not include @upstash/ratelimit or @upstash/redis, and
+// adding a dependency here isn't possible without also regenerating
+// package-lock.json from a real npm install -- so a small, dependency-free
+// fixed-window limiter is implemented below instead of importing those
+// packages.
+//
+// RUNTIME NOTE: uses the Web Request/Response API; intended to run
+// server-side (Supabase Edge Function or serverless endpoint), NOT in the
+// Vite client bundle. Reads UPSTASH_REDIS_REST_URL / _TOKEN from the server
+// environment -- these must never be prefixed VITE_/NEXT_PUBLIC_.
 
-import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
+function upstashConfig(): { url: string; token: string } {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) {
+    throw new Error('UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN are not configured.');
+  }
+  return { url, token };
+}
 
-const redis = Redis.fromEnv();
+export interface LimitResult {
+  success: boolean;
+  limit: number;
+  remaining: number;
+  /** Epoch ms when the window resets. */
+  reset: number;
+}
 
-export const passwordResetIpLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(3, '15 m'),
-  prefix: 'ratelimit:password-reset:ip',
-  analytics: true,
-  ephemeralCache: new Map(),
-});
+/**
+ * Minimal fixed-window limiter: one Redis INCR + a conditional EXPIRE (NX),
+ * sent together via Upstash's REST /pipeline endpoint so each check is a
+ * single round trip.
+ */
+class FixedWindowLimiter {
+  constructor(
+    private limitCount: number,
+    private windowSeconds: number,
+    private prefix: string,
+  ) {}
 
-export const passwordResetEmailLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(3, '15 m'),
-  prefix: 'ratelimit:password-reset:email',
-  analytics: true,
-  ephemeralCache: new Map(),
-});
+  async limit(key: string): Promise<LimitResult> {
+    const { url, token } = upstashConfig();
+    const redisKey = `${this.prefix}:${key}`;
+    const res = await fetch(`${url}/pipeline`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([
+        ['INCR', redisKey],
+        ['EXPIRE', redisKey, String(this.windowSeconds), 'NX'],
+      ]),
+    });
+    if (!res.ok) throw new Error(`Upstash rate-limit request failed: ${res.status}`);
+    const [incr] = (await res.json()) as Array<{ result: number }>;
+    const count = incr.result;
+    return {
+      success: count <= this.limitCount,
+      limit: this.limitCount,
+      remaining: Math.max(0, this.limitCount - count),
+      reset: Date.now() + this.windowSeconds * 1000,
+    };
+  }
+}
 
-export const generalFormLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, '1 m'),
-  prefix: 'ratelimit:form',
-  analytics: true,
-  ephemeralCache: new Map(),
-});
+export const passwordResetIpLimiter = new FixedWindowLimiter(3, 15 * 60, 'ratelimit:password-reset:ip');
+export const passwordResetEmailLimiter = new FixedWindowLimiter(3, 15 * 60, 'ratelimit:password-reset:email');
+export const generalFormLimiter = new FixedWindowLimiter(5, 60, 'ratelimit:form');
 
+/**
+ * Resolve the real client IP. Cloudflare fronts this app, so
+ * cf-connecting-ip is authoritative and MUST be checked first: trusting
+ * x-forwarded-for / x-real-ip ahead of it would let a request spoof a
+ * different IP (those headers are attacker-controllable unless a trusted
+ * proxy strips and rewrites them) and dodge these limits entirely.
+ */
 export function getClientIp(req: Request): string {
-  const vercelIp = req.headers.get('x-real-ip');
-  if (vercelIp) return vercelIp;
-
   const cfIp = req.headers.get('cf-connecting-ip');
-  if (cfIp) return cfIp;
+  if (cfIp) return cfIp.trim();
+
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp) return realIp.trim();
 
   const forwarded = req.headers.get('x-forwarded-for');
   const first = forwarded?.split(',')[0]?.trim();
