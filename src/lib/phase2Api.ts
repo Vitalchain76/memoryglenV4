@@ -68,7 +68,7 @@ function ok<T>(data: T): Result<T> {
 
 function fail<T>(error: string): Result<T> {
   return { data: null, error };
-  
+}
 
 /** Fetch the current state of a life record. Public rows (MEMORIAL) are readable by anyone. */
 export async function getLifeRecordState(lifeRecordId: string): Promise<Result<LifeRecord>> {
