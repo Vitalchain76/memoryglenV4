@@ -79,4 +79,3 @@ export const WhiteLabelProvider = ({ children }: { children: ReactNode }) => {
       };
 
 export const useWhiteLabel = () => useContext(WhiteLabelContext);
-</WhiteLabelContext.Provider>
