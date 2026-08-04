@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useWhiteLabel } from '@/context/WhiteLabelContext';
 
 const NAV_LINKS = [
   { to: '/', label: 'Home' },
