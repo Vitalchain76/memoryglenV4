@@ -52,6 +52,7 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
+  const { isLivingGlen } = useWhiteLabel();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
