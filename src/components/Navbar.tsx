@@ -88,10 +88,12 @@ export default function Navbar() {
       >
         <div className="container-content flex h-full items-center justify-between gap-4">
           {/* Wordmark */}
-          <Link to="/" className="flex min-h-12 items-center gap-2.5" aria-label="MemoryGlen home">
+          <Link
+            to="/"
+            className="flex min-h-12 items-center gap-2.5"
+            aria-label={isLivingGlen ? 'LivingGlen home' : 'MemoryGlen home'}>
             <img src="/logo-mark.svg" alt="" width={28} height={28} />
-            <span className="font-display text-[1.375rem] font-medium text-body">MemoryGlen</span>
-          </Link>
+            
 
           {/* Center nav — desktop */}
           <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
