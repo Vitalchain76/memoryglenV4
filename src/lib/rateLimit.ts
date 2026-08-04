@@ -41,11 +41,15 @@ export interface LimitResult {
  * single round trip.
  */
 class FixedWindowLimiter {
-  constructor(
-    private limitCount: number,
-    private windowSeconds: number,
-    private prefix: string,
-  ) {}
+    private limitCount: number;
+    private windowSeconds: number;
+    private prefix: string;
+
+    constructor(limitCount: number, windowSeconds: number, prefix: string) {
+          this.limitCount = limitCount;
+          this.windowSeconds = windowSeconds;
+          this.prefix = prefix;
+    }
 
   async limit(key: string): Promise<LimitResult> {
     const { url, token } = upstashConfig();
