@@ -96,14 +96,14 @@ export default function Navbar() {
             <span className="flex flex-col leading-tight">
             <span className="font-display text-[1.375rem] font-medium text-body">
               {isLivingGlen ? 'LivingGlen' : 'MemoryGlen'}
-            </span>span>
+            </span>
             <span className="text-[0.6875rem] font-medium uppercase tracking-wide text-sage">
               {isLivingGlen ? 'Active Life Record' : 'Digital Memorial Archive'}
-            </span>span>
-            </span>span>
-          </Link>Link>
+            </span>
+            </span>
+          </Link>
         
-        </span>{/* Center nav — desktop */}
+        {/* Center nav — desktop */}
           <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
             {NAV_LINKS.map((l) => (
               <NavLink
