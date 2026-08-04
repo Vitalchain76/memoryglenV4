@@ -93,9 +93,17 @@ export default function Navbar() {
             className="flex min-h-12 items-center gap-2.5"
             aria-label={isLivingGlen ? 'LivingGlen home' : 'MemoryGlen home'}>
             <img src="/logo-mark.svg" alt="" width={28} height={28} />
-            
-
-          {/* Center nav — desktop */}
+            <span className="flex flex-col leading-tight">
+            <span className="font-display text-[1.375rem] font-medium text-body">
+              {isLivingGlen ? 'LivingGlen' : 'MemoryGlen'}
+            </span>span>
+            <span className="text-[0.6875rem] font-medium uppercase tracking-wide text-sage">
+              {isLivingGlen ? 'Active Life Record' : 'Digital Memorial Archive'}
+            </span>span>
+            </span>span>
+          </Link>Link>
+        
+        </span>{/* Center nav — desktop */}
           <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
             {NAV_LINKS.map((l) => (
               <NavLink
