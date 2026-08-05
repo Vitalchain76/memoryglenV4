@@ -4,12 +4,19 @@ import { motion, useInView } from 'framer-motion';
 import {
   ArrowRight,
   BookOpen,
+  Clock,
   Flame,
+  GraduationCap,
+  Heart,
   Images,
   Mic,
   Music,
   QrCode,
   ShieldCheck,
+  Sparkles,
+  Store,
+  Trophy,
+  Users,
   Video,
 } from 'lucide-react';
 import Reveal from '@/components/Reveal';
@@ -18,6 +25,13 @@ import Hero from '@/pages/home/Hero';
 import JohnDemo from '@/pages/home/JohnDemo';
 import HowItWorks from '@/pages/home/HowItWorks';
 import FamilyGlenExplainer from '@/pages/home/FamilyGlenExplainer';
+import { useWhiteLabel } from '@/context/WhiteLabelContext';
+
+// LivingGlen active-life palette. Kept local so MemoryGlen's forest/brass
+// design tokens are never touched.
+const LG_EMERALD = '#059669';
+const LG_MINT = '#D1FAE5';
+const LG_STONE = '#F5F5F4';
 
 /* ---------- Section 5 — Feature grid ---------- */
 const FEATURES = [
@@ -163,7 +177,7 @@ function HomeStats() {
             day they are real, and not before. */}
         <div className="mx-auto max-w-reading text-center">
           <p className="type-quote text-bone">
-            Built for families across Zimbabwe, South Africa and the diaspora \u2014
+            Built for families across Zimbabwe, South Africa and the diaspora —
             wherever a memorial link needs to reach.
           </p>
           <p className="type-meta mt-4 text-sage">
@@ -261,8 +275,198 @@ function ClosingCta() {
   );
 }
 
-/** Home — `/` (home.md). Parchment by day / Dusk after sunset; no provider rail. */
+/* ==========================================================================
+   LivingGlen (livingglen.com) — active Life Operating System home sections.
+   These render ONLY when isLivingGlen is true. No memorial / funeral / tribute
+   content appears on the LivingGlen home. Emerald / mint / stone palette,
+   kept local so MemoryGlen tokens are untouched.
+   ========================================================================== */
+
+/* ---------- LivingGlen §1 — Group Glens showcase ---------- */
+const GROUP_GLENS = [
+  { Icon: Heart, title: 'Family Circles', body: 'A shared living space for your whole family — births, milestones, weekly moments, all in one private circle.' },
+  { Icon: GraduationCap, title: 'School Alumni Cohorts', body: 'Reunite your class year. Keep the group story growing long after graduation day.' },
+  { Icon: Trophy, title: 'Sports Teams', body: 'Seasons, wins, and the people who made them. A living record for the whole squad.' },
+];
+
+function GroupGlensShowcase() {
+  return (
+    <section id="group-glens" className="section-pad scroll-mt-24" style={{ backgroundColor: LG_STONE }} aria-labelledby="group-glens-heading">
+      <div className="container-content">
+        <Reveal>
+          <p className="eyebrow" style={{ color: LG_EMERALD }}>GROUP GLENS</p>
+          <h2 id="group-glens-heading" className="type-h2 mt-4 text-body">
+            Every circle you belong to, alive in one place.
+          </h2>
+          <p className="type-story mt-4 max-w-reading text-soft">
+            Start a shared Glen for the people you do life with — and let everyone add to the story as it happens.
+          </p>
+        </Reveal>
+        <ul className="mt-14 grid gap-6 sm:grid-cols-3">
+          {GROUP_GLENS.map(({ Icon, title, body }, i) => (
+            <Reveal as="li" key={title} delay={i * 0.08}>
+              <div
+                className="group h-full rounded-lg p-7 transition-transform duration-200 hover:-translate-y-0.5"
+                style={{ backgroundColor: '#ffffff', border: `1px solid ${LG_MINT}` }}
+              >
+                <span
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full"
+                  style={{ backgroundColor: LG_MINT, color: LG_EMERALD }}
+                >
+                  <Icon size={22} aria-hidden />
+                </span>
+                <h3 className="type-h3 mt-5 text-body">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-soft">{body}</p>
+              </div>
+            </Reveal>
+          ))}
+        </ul>
+        <Reveal>
+          <Link
+            to="/plans"
+            className="btn mt-10 inline-flex min-h-12"
+            style={{ backgroundColor: LG_EMERALD, color: '#ffffff', borderColor: LG_EMERALD }}
+          >
+            Start a Group Glen <ArrowRight size={16} aria-hidden />
+          </Link>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- LivingGlen §2 — Time Capsules & Milestone cards ---------- */
+const TIME_CAPSULES = [
+  { Icon: Mic, title: 'Voice Notes', body: 'Record a message today, delivered to future you — or to someone you love, on a date you choose.' },
+  { Icon: Clock, title: 'Anniversary Archives', body: 'Bundle a year of moments into a capsule that opens on the day that matters.' },
+  { Icon: Sparkles, title: 'Milestone Cards', body: 'Mark first steps, new jobs, big moves — each one saved to your living record forever.' },
+];
+
+function TimeCapsules() {
+  return (
+    <section id="time-capsules" className="section-pad scroll-mt-24" style={{ backgroundColor: '#ffffff' }} aria-labelledby="time-capsules-heading">
+      <div className="container-content">
+        <Reveal>
+          <p className="eyebrow" style={{ color: LG_EMERALD }}>TIME CAPSULES & MILESTONES</p>
+          <h2 id="time-capsules-heading" className="type-h2 mt-4 text-body">
+            Capture the moment now. Open it when it counts.
+          </h2>
+        </Reveal>
+        <ul className="mt-14 grid gap-6 sm:grid-cols-3">
+          {TIME_CAPSULES.map(({ Icon, title, body }, i) => (
+            <Reveal as="li" key={title} delay={i * 0.08}>
+              <div
+                className="h-full rounded-lg p-7"
+                style={{ backgroundColor: LG_STONE, border: `1px solid ${LG_MINT}` }}
+              >
+                <Icon size={24} aria-hidden style={{ color: LG_EMERALD }} />
+                <h3 className="type-h3 mt-4 text-body">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-soft">{body}</p>
+              </div>
+            </Reveal>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- LivingGlen §3 — Service Provider & Partner marketplace preview ---------- */
+function ServiceProviderPreview() {
+  return (
+    <section className="section-pad" style={{ backgroundColor: LG_STONE }} aria-labelledby="providers-heading">
+      <div className="container-content">
+        <div className="grid items-center gap-10 md:grid-cols-2">
+          <Reveal>
+            <p className="eyebrow" style={{ color: LG_EMERALD }}>SERVICE PROVIDER MARKETPLACE</p>
+            <h2 id="providers-heading" className="type-h2 mt-4 text-body">
+              The partners who help you live it well.
+            </h2>
+            <p className="type-story mt-4 text-soft">
+              Photographers, celebrants, printers and planners — a curated directory of providers to bring your milestones to life. List your service or find the right partner.
+            </p>
+            <Link
+              to="/service-providers"
+              className="btn mt-8 inline-flex min-h-12"
+              style={{ backgroundColor: LG_EMERALD, color: '#ffffff', borderColor: LG_EMERALD }}
+            >
+              Explore Service Providers <ArrowRight size={16} aria-hidden />
+            </Link>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div
+              className="flex flex-col gap-4 rounded-lg p-7"
+              style={{ backgroundColor: '#ffffff', border: `1px solid ${LG_MINT}` }}
+            >
+              {[
+                { Icon: Store, label: 'Featured providers, vetted for quality' },
+                { Icon: Users, label: 'Trusted by Group Glens across the network' },
+                { Icon: ShieldCheck, label: 'Secure, private, and always your call' },
+              ].map(({ Icon, label }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <span
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: LG_MINT, color: LG_EMERALD }}
+                  >
+                    <Icon size={18} aria-hidden />
+                  </span>
+                  <p className="text-sm text-body">{label}</p>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- LivingGlen §4 — Closing CTA ---------- */
+function LivingGlenClosingCta() {
+  return (
+    <section className="section-pad" style={{ backgroundColor: '#042f25' }} aria-labelledby="lg-closing-heading">
+      <div className="container-content flex flex-col items-center text-center">
+        <Sparkles size={28} aria-hidden style={{ color: LG_MINT }} />
+        <h2 id="lg-closing-heading" className="type-h2 mt-6 max-w-reading" style={{ color: '#ffffff' }}>
+          Start authoring your story today.
+        </h2>
+        <p className="type-story mt-4" style={{ color: LG_MINT }}>
+          Your living record — milestones, voices, and time capsules — begins in minutes.
+        </p>
+        <Link
+          to="/plans"
+          className="btn mt-8 inline-flex min-h-12"
+          style={{ backgroundColor: LG_EMERALD, color: '#ffffff', borderColor: LG_EMERALD }}
+        >
+          Start Your Living Record
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+/** Home — `/` (home.md). Parchment by day / Dusk after sunset; no provider rail.
+ *
+ * Domain-aware: on livingglen.com (isLivingGlen) the page renders the active
+ * LivingGlen sections only — Group Glens, Time Capsules, Service Providers and
+ * a living-record CTA. It never renders JohnDemo, the five-room memorial teaser,
+ * the memorial feature grid, the stats band or the funeral/society partner
+ * bands. memoryglen.com renders the original memorial home unchanged. */
 export default function Home() {
+  const { isLivingGlen } = useWhiteLabel();
+
+  if (isLivingGlen) {
+    return (
+      <>
+        <Hero />
+        <GroupGlensShowcase />
+        <TimeCapsules />
+        <ServiceProviderPreview />
+        <LivingGlenClosingCta />
+      </>
+    );
+  }
+
   return (
     <>
       <Hero />

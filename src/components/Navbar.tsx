@@ -6,7 +6,10 @@ import { Menu, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWhiteLabel } from '@/context/WhiteLabelContext';
 
-const NAV_LINKS = [
+type NavItem = { to: string; label: string };
+
+// MemoryGlen (memoryglen.com) — the sacred memorial platform. Untouched.
+const MEMORYGLEN_NAV_LINKS: NavItem[] = [
   { to: '/', label: 'Home' },
   { to: '/memorials', label: 'Memorials' },
   { to: '/themes', label: 'Themes' },
@@ -15,11 +18,27 @@ const NAV_LINKS = [
   { to: '/plans', label: 'Plans' },
 ];
 
+// LivingGlen (livingglen.com) — the active Life Operating System. Group Glens
+// and Time Capsules are in-page sections on the LivingGlen home (anchors), so
+// they scroll smoothly instead of 404ing. Service Providers and Plans are real
+// routes.
+const LIVINGGLEN_NAV_LINKS: NavItem[] = [
+  { to: '/#group-glens', label: 'Group Glens' },
+  { to: '/#time-capsules', label: 'Time Capsules' },
+  { to: '/service-providers', label: 'Service Providers' },
+  { to: '/plans', label: 'Life Plans' },
+];
+
+const LG_EMERALD = '#059669';
+
 /**
  * Navbar — design.md §7.1. Sticky 72px, translucent mode-aware surface with
  * backdrop blur. Gains a 1px brass bottom rule after 40px of scroll.
  * Positioning contract: sticky in normal flow — pages do NOT compensate for
  * nav height.
+ *
+ * Domain-aware: on livingglen.com the wordmark, sub-label and nav links switch
+ * to the active LivingGlen set. memoryglen.com is unchanged.
  */
 /**
  * Sign in / My account.
@@ -53,6 +72,10 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
   const { isLivingGlen } = useWhiteLabel();
+
+  const navLinks = isLivingGlen ? LIVINGGLEN_NAV_LINKS : MEMORYGLEN_NAV_LINKS;
+  const wordmark = isLivingGlen ? 'LivingGlen' : 'MemoryGlen';
+  const subLabel = isLivingGlen ? 'Active Life Record' : 'Digital Memorial Archive';
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -94,26 +117,33 @@ export default function Navbar() {
             aria-label={isLivingGlen ? 'LivingGlen home' : 'MemoryGlen home'}>
             <img src="/logo-mark.svg" alt="" width={28} height={28} />
             <span className="flex flex-col leading-tight">
-            <span className="font-display text-[1.375rem] font-medium text-body">
-              {isLivingGlen ? 'LivingGlen' : 'MemoryGlen'}
-            </span>
-            <span className="text-[0.6875rem] font-medium uppercase tracking-wide text-sage">
-              {isLivingGlen ? 'Active Life Record' : 'Digital Memorial Archive'}
-            </span>
+              <span className="font-display text-[1.375rem] font-medium text-body">
+                {wordmark}
+              </span>
+              <span className="text-[0.6875rem] font-medium uppercase tracking-wide text-sage">
+                {subLabel}
+              </span>
             </span>
           </Link>
-        
-        {/* Center nav — desktop */}
+
+          {/* Center nav — desktop */}
           <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
-            {NAV_LINKS.map((l) => (
+            {navLinks.map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
                 className={({ isActive }) =>
                   cn(
                     'py-2 text-[0.9375rem] font-medium transition-colors duration-200',
-                    isActive ? 'text-evergreen' : 'text-body hover:text-evergreen',
+                    isActive
+                      ? isLivingGlen
+                        ? ''
+                        : 'text-evergreen'
+                      : 'text-body hover:text-evergreen',
                   )
+                }
+                style={({ isActive }) =>
+                  isLivingGlen && isActive ? { color: LG_EMERALD } : undefined
                 }
               >
                 {l.label}
@@ -125,7 +155,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2 sm:gap-4">
             <button
               type="button"
-              aria-label="Search MemoryGlen"
+              aria-label={isLivingGlen ? 'Search LivingGlen' : 'Search MemoryGlen'}
               onClick={() => setSearchOpen(true)}
               className="flex min-h-12 min-w-12 items-center justify-center rounded-sm text-body transition-colors hover:text-evergreen"
             >
@@ -135,10 +165,11 @@ export default function Navbar() {
                 in landed on the memorial-creation wizard instead. */}
             <AccountLink />
             <Link
-              to="/register"
+              to={isLivingGlen ? '/plans' : '/register'}
               className="btn btn-evergreen hidden !min-h-11 px-5 py-2 text-[0.9375rem] sm:inline-flex"
+              style={isLivingGlen ? { backgroundColor: LG_EMERALD, borderColor: LG_EMERALD } : undefined}
             >
-              Get Started
+              {isLivingGlen ? 'Start Your Living Record' : 'Get Started'}
             </Link>
             <button
               type="button"
@@ -168,16 +199,16 @@ export default function Navbar() {
           >
             <div className="w-full max-w-reading" onClick={(e) => e.stopPropagation()}>
               <label htmlFor="site-search" className="eyebrow mb-4 !text-sage">
-                Search MemoryGlen
+                {isLivingGlen ? 'Search LivingGlen' : 'Search MemoryGlen'}
               </label>
               <input
                 id="site-search"
                 autoFocus
                 type="search"
-                placeholder="A name, a place, a hymn…"
+                placeholder={isLivingGlen ? 'A milestone, a name, a moment…' : 'A name, a place, a hymn…'}
                 className="w-full border-0 border-b border-brass/60 bg-transparent pb-4 font-display text-3xl text-bone placeholder:text-sage/60 focus:outline-none"
               />
-              <p className="mt-4 text-sm text-sage">Search is coming soon. Browse <Link to="/memorials" className="text-brass-soft underline underline-offset-4">public memorials</Link> in the meantime.</p>
+              <p className="mt-4 text-sm text-sage">Search is coming soon. {isLivingGlen ? <>Explore <Link to="/service-providers" className="text-brass-soft underline underline-offset-4">service providers</Link> in the meantime.</> : <>Browse <Link to="/memorials" className="text-brass-soft underline underline-offset-4">public memorials</Link> in the meantime.</>}</p>
             </div>
             <button
               type="button"
@@ -207,7 +238,7 @@ export default function Navbar() {
             <div className="flex h-[72px] items-center justify-between px-6">
               <span className="flex items-center gap-2.5">
                 <img src="/logo-mark.svg" alt="" width={28} height={28} />
-                <span className="font-display text-[1.375rem] font-medium text-bone">MemoryGlen</span>
+                <span className="font-display text-[1.375rem] font-medium text-bone">{wordmark}</span>
               </span>
               <button
                 type="button"
@@ -219,7 +250,7 @@ export default function Navbar() {
               </button>
             </div>
             <nav className="flex flex-col gap-1 px-6 pt-8" aria-label="Mobile">
-              {NAV_LINKS.map((l, i) => (
+              {navLinks.map((l, i) => (
                 <motion.div
                   key={l.to}
                   initial={{ opacity: 0, y: 12 }}
@@ -237,12 +268,16 @@ export default function Navbar() {
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.06 * NAV_LINKS.length, duration: 0.3 }}
+                transition={{ delay: 0.06 * navLinks.length, duration: 0.3 }}
                 className="mt-8"
               >
                 <AccountLink mobile />
-                <Link to="/register" className="btn btn-evergreen w-full">
-                  Get Started
+                <Link
+                  to={isLivingGlen ? '/plans' : '/register'}
+                  className="btn btn-evergreen w-full"
+                  style={isLivingGlen ? { backgroundColor: LG_EMERALD, borderColor: LG_EMERALD } : undefined}
+                >
+                  {isLivingGlen ? 'Start Your Living Record' : 'Get Started'}
                 </Link>
               </motion.div>
             </nav>
