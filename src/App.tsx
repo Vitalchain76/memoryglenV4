@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router';
-import Layout from '@/componZents/Layout';
+import Layout from '@/components/Layout';
 import Home from '@/pages/Home';
 import Memorials from '@/pages/Memorials';
 import MemorialVirginia from '@/pages/MemorialVirginia';
@@ -19,7 +19,7 @@ import ServiceProviders from '@/pages/ServiceProviders';
 import Create from '@/pages/Create';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { WhiteLabelProvider } from '@/context/WhiteLabelContext';
-import NyaradzoPortalHeader from '@/components/partner/NyaradzoPortalHeader';
+import PartnerPortalHeader from '@/components/partner/PartnerPortalHeader';
 
 /**
  * Pattern A (children): Layout renders `{children}` and wraps <Routes>.
@@ -28,7 +28,7 @@ import NyaradzoPortalHeader from '@/components/partner/NyaradzoPortalHeader';
 export default function App() {
   return (
     <WhiteLabelProvider>
-      <NyaradzoPortalHeader />
+      <PartnerPortalHeader />
       <AuthProvider>
         <Layout>
           <Routes>
@@ -66,4 +66,3 @@ export default function App() {
     </WhiteLabelProvider>
   );
 }
-Z
