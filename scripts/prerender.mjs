@@ -62,9 +62,9 @@ function collectPages() {
   const pages = [
     {
       path: '',
-      title: 'MemoryGlen — Where Memories Live Forever',
+      title: 'The Glen Platform · Active Life Operating System & Legacy Vault',
       description:
-        'Build a lasting memorial for someone you love — their story, their photographs, their voice — and invite your family to add to it.',
+        'Document daily living milestones, voice memories, time capsules, and sacred family legacy archives.',
       image: '/hero-home.jpg',
       type: 'website',
     },
