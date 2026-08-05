@@ -20,14 +20,6 @@ const PARTNERS: AffiliatePartner[] = [
     cashbackRate: '5% of first premium',
     referralPath: '/partners/old-mutual',
   },
-  {
-    id: 'nyaradzo',
-    name: 'Nyaradzo',
-    category: 'Funeral services & estate planning',
-    logoInitial: 'NY',
-    cashbackRate: '3% of policy value',
-    referralPath: '/partners/nyaradzo',
-  },
 ];
 
 interface ReferralWalletTabProps {

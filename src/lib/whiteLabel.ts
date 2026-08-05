@@ -10,15 +10,11 @@ export interface WhiteLabelConfig {
  * B2B white-label configuration. Funeral parlours and burial societies can be
  * mapped to their own brand colour, logo and booking URL, so a memorial can be
  * presented under a partner's identity while running on MemoryGlen.
+ *
+ * No specific partner is configured yet. Add an entry here (keyed by partner
+ * id) once a real, contracted white-label partner is ready to launch.
  */
 export const PARLOUR_CONFIGS: Record<string, WhiteLabelConfig> = {
-  nyaradzo: {
-    partnerId: 'nyaradzo',
-    partnerName: 'Nyaradzo Funeral Services',
-    logoUrl: '/brands/nyaradzo-logo.png',
-    primaryColor: '#005A36',
-    bookingUrl: 'https://www.nyaradzo.co.zw/bookings',
-  },
   default: {
     partnerId: 'memoryglen',
     partnerName: 'MemoryGlen Digital Legacy',

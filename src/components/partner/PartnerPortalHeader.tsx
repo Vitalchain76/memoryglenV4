@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 import { useWhiteLabel } from '@/context/WhiteLabelContext';
 
-export default function NyaradzoPortalHeader() {
-  const { isNyaradzoMode, toggleNyaradzoMode, config } = useWhiteLabel();
+export default function PartnerPortalHeader() {
+  const { isPartnerMode, togglePartnerMode, config } = useWhiteLabel();
   const [showDemoModal, setShowDemoModal] = useState(false);
 
   return (
@@ -24,9 +24,9 @@ export default function NyaradzoPortalHeader() {
           <span className="font-mono text-[11px] text-slate-400 uppercase tracking-wider">
             B2B Pitch Mode
           </span>
-          {isNyaradzoMode && (
+          {isPartnerMode && (
             <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded-full font-semibold">
-              Nyaradzo Partner Co-Branding Active
+              Partner Co-Branding Active
             </span>
           )}
         </div>
@@ -40,21 +40,21 @@ export default function NyaradzoPortalHeader() {
           </button>
 
           <button
-            onClick={toggleNyaradzoMode}
+            onClick={togglePartnerMode}
             className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${
-              isNyaradzoMode
+              isPartnerMode
                 ? 'bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-sm'
                 : 'bg-emerald-800 text-white hover:bg-emerald-700'
             }`}
           >
             <Sparkles size={13} />
-            {isNyaradzoMode ? 'Switch to Standard MemoryGlen' : 'Activate Nyaradzo Partner Mode'}
+            {isPartnerMode ? 'Switch to Standard MemoryGlen' : 'Activate Partner Mode'}
           </button>
         </div>
       </div>
 
-      {/* Nyaradzo Co-Branded Header Banner */}
-      {isNyaradzoMode && config && (
+      {/* Partner Co-Branded Header Banner */}
+      {isPartnerMode && config && (
         <div className="bg-emerald-950 text-white border-b-2 border-amber-500/80 shadow-md">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row items-center justify-between gap-4">
 
@@ -86,7 +86,7 @@ export default function NyaradzoPortalHeader() {
               >
                 <PhoneCall size={14} className="text-amber-400" />
                 <div className="text-left">
-                  <div className="text-[10px] text-emerald-300/80 leading-none">24/7 Bereavement Line</div>
+                  <div className="text-[10px] text-emerald-300/80 leading-none">24/7 Support Line</div>
                   <div className="font-semibold mt-0.5">{config.hotline.split('/')[0]}</div>
                 </div>
               </a>
@@ -118,11 +118,11 @@ export default function NyaradzoPortalHeader() {
 
             <div className="flex items-center gap-2 text-emerald-800 font-bold text-lg mb-2">
               <Building2 size={20} />
-              Nyaradzo Group Partnership Architecture
+              Partner Portal Architecture
             </div>
 
             <p className="text-xs text-slate-600 mb-4 leading-relaxed">
-              This white-label module allows Nyaradzo Funeral Services to bundle MemoryGlen's digital memorial, QR headstone, and live-stream features into policy packages.
+              This white-label module allows a contracted partner organization to bundle MemoryGlen's digital memorial, QR headstone, and live-stream features into their own service packages.
             </p>
 
             <div className="space-y-2.5 text-xs mb-6">
@@ -132,7 +132,7 @@ export default function NyaradzoPortalHeader() {
               </div>
               <div className="flex items-start gap-2 p-2.5 bg-emerald-50 rounded-lg border border-emerald-100">
                 <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
-                <span><strong>Sahwira Mukuru Branding:</strong> Custom colors, 24/7 hotline, and policy verification.</span>
+                <span><strong>Partner Branding:</strong> Custom colors, 24/7 hotline, and policy verification.</span>
               </div>
               <div className="flex items-start gap-2 p-2.5 bg-emerald-50 rounded-lg border border-emerald-100">
                 <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />

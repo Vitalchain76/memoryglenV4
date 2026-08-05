@@ -14,36 +14,23 @@ export interface PartnerConfig {
   policyCheckUrl: string;
 }
 
-const nyaradzoConfig: PartnerConfig = {
-  id: 'nyaradzo',
-  name: 'Nyaradzo Funeral Services',
-  shortName: 'Nyaradzo Group',
-  tagline: 'Sahwira Mukuru - Your Trusted Companion in Digital Legacy & Bereavement',
-  primaryColor: '#005A36',
-  accentColor: '#D4AF37',
-  hotline: '+263 242 792696 / +263 772 123 456',
-  portalUrl: 'https://www.nyaradzo.co.zw',
-  badgeText: 'Official Nyaradzo Partner Portal',
-  policyCheckUrl: 'https://www.nyaradzo.co.zw/self-service'
-};
-
 interface WhiteLabelContextType {
   isLivingGlen: boolean;
-  isNyaradzoMode: boolean;
-  toggleNyaradzoMode: () => void;
+  isPartnerMode: boolean;
+  togglePartnerMode: () => void;
   config: PartnerConfig | null;
 }
 
 const WhiteLabelContext = createContext<WhiteLabelContextType>({
   isLivingGlen: false,
-  isNyaradzoMode: false,
-  toggleNyaradzoMode: () => {},
+  isPartnerMode: false,
+  togglePartnerMode: () => {},
   config: null,
 });
 
 export const WhiteLabelProvider = ({ children }: { children: ReactNode }) => {
-  const [isNyaradzoMode, setIsNyaradzoMode] = useState<boolean>(() => {
-    return localStorage.getItem('mg_nyaradzo_mode') === 'true';
+  const [isPartnerMode, setIsPartnerMode] = useState<boolean>(() => {
+    return localStorage.getItem('mg_partner_mode') === 'true';
   });
 
   const [isLivingGlen, setIsLivingGlen] = useState<boolean>(false);
@@ -54,10 +41,10 @@ export const WhiteLabelProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const toggleNyaradzoMode = () => {
-    setIsNyaradzoMode((prev) => {
+  const togglePartnerMode = () => {
+    setIsPartnerMode((prev) => {
       const next = !prev;
-      localStorage.setItem('mg_nyaradzo_mode', String(next));
+      localStorage.setItem('mg_partner_mode', String(next));
       return next;
     });
   };
@@ -66,16 +53,20 @@ export const WhiteLabelProvider = ({ children }: { children: ReactNode }) => {
     <WhiteLabelContext.Provider
       value={{
         isLivingGlen,
-        isNyaradzoMode,
-        toggleNyaradzoMode,
-        config: isNyaradzoMode ? nyaradzoConfig : null,
+        isPartnerMode,
+        togglePartnerMode,
+        // No generic partner config is wired up yet. Add one here (matching
+        // PartnerConfig) once a real, contracted white-label partner is ready
+        // to launch. Do not hardcode a specific brand until a partnership is
+        // actually signed.
+        config: null,
       }}
-      >
-    <div className={isNyaradzoMode ? 'nyaradzo-partner-theme' : ''}>
-      {children}
-    </div>
+    >
+      <div className={isPartnerMode ? 'partner-theme' : ''}>
+        {children}
+      </div>
     </WhiteLabelContext.Provider>
-        );
-      };
+  );
+};
 
 export const useWhiteLabel = () => useContext(WhiteLabelContext);
