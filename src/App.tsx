@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router';
+import { useWhiteLabel } from '@/context/WhiteLabelContext';
 import Layout from '@/components/Layout';
 import Home from '@/pages/Home';
 import Memorials from '@/pages/Memorials';
+import Glens from '@/pages/Glens';
 import MemorialVirginia from '@/pages/MemorialVirginia';
 import JohnPetersMemorial from '@/pages/JohnPetersMemorial';
 import MemorialPage from '@/pages/MemorialPage';
@@ -23,6 +25,16 @@ import PartnerPortalHeader from '@/components/partner/PartnerPortalHeader';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 /**
+ * LivingGlen has no memorial directory. On livingglen.com, /memorials is
+ * redirected to the active /glens directory; on memoryglen.com it renders the
+ * memorial directory as before. Keeps a single SPA serving both brands.
+ */
+function MemorialsRoute() {
+  const { isLivingGlen } = useWhiteLabel();
+  return isLivingGlen ? <Navigate to="/glens" replace /> : <Memorials />;
+}
+
+/**
  * Pattern A (children): Layout renders `{children}` and wraps <Routes>.
  * See react-dev.md "Layout + routing contract" — never mix with <Outlet/>.
  *
@@ -39,7 +51,10 @@ export default function App() {
           <Layout>
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/memorials" element={<Memorials />} />
+              <Route path="/glens" element={<Glens />} />
+              {/* On livingglen.com /memorials redirects to /glens; on
+                  memoryglen.com it renders the memorial directory. */}
+              <Route path="/memorials" element={<MemorialsRoute />} />
               <Route path="/memorials/virginia-dadirayi-chiimba" element={<MemorialVirginia />} />
               <Route path="/memorials/john-peters" element={<JohnPetersMemorial />} />
               {/* Every other slug falls back to the content-pack dataset.
