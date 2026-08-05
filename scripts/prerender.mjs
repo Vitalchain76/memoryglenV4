@@ -48,6 +48,15 @@ function resolveSite() {
 
 const SITE = resolveSite();
 
+/**
+ * LivingGlen deployments identify themselves by their host (SITE_URL or the
+ * Vercel domain). They get their own theme-color so the prerendered first byte
+ * matches the LivingGlen brand for crawlers and mobile browser chrome, instead
+ * of MemoryGlen's evergreen. The canonical/og URLs already derive from SITE.
+ */
+const IS_LIVINGGLEN = /livingglen/i.test(SITE);
+const THEME_COLOR = IS_LIVINGGLEN ? '#1C2526' : '#16302B';
+
 const esc = (s) =>
   String(s ?? '')
     .replace(/&/g, '&amp;')
@@ -140,6 +149,7 @@ function withTags(html, page) {
     `<meta name="twitter:title" content="${esc(page.title)}" />`,
     `<meta name="twitter:description" content="${esc(page.description)}" />`,
     `<meta name="twitter:image" content="${esc(image)}" />`,
+    `<meta name="theme-color" content="${THEME_COLOR}" />`,
   ].join('\n    ');
 
   // Idempotent: strip anything a previous run injected before injecting again,
@@ -148,10 +158,11 @@ function withTags(html, page) {
   return html
     .replace(/<title>.*?<\/title>\s*/s, '')
     .replace(/<meta\s+name="description"[^>]*>\s*/gi, '')
+    .replace(/<meta\s+name="theme-color"[^>]*>\s*/gi, '')
     .replace(/<link\s+rel="canonical"[^>]*>\s*/gi, '')
     .replace(/<meta\s+property="og:[^"]*"[^>]*>\s*/gi, '')
     .replace(/<meta\s+name="twitter:[^"]*"[^>]*>\s*/gi, '')
-    .replace('</head>', `  ${tags}\n  </head>`);
+    .replace('</head>', `    ${tags}\n  </head>`);
 }
 
 function main() {
