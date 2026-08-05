@@ -1,485 +1,256 @@
-import { useRef, useState } from 'react';
-import { Link } from 'react-router';
-import { motion, useInView } from 'framer-motion';
+import React, { useState } from 'react';
+import { useWhiteLabel } from '../context/WhiteLabelContext';
 import {
-  ArrowRight,
-  BookOpen,
-  Clock,
-  Flame,
-  GraduationCap,
-  Heart,
-  Images,
-  Mic,
-  Music,
-  QrCode,
-  ShieldCheck,
-  Sparkles,
-  Store,
-  Trophy,
   Users,
-  Video,
+  GraduationCap,
+  Flame,
+  Compass,
+  Sparkles,
+  Clock,
+  Calendar,
+  MapPin,
+  Mic,
+  Lock,
+  ChevronRight,
+  Globe,
 } from 'lucide-react';
-import Reveal from '@/components/Reveal';
-import CandleFlame from '@/components/CandleFlame';
-import Hero from '@/pages/home/Hero';
-import JohnDemo from '@/pages/home/JohnDemo';
-import HowItWorks from '@/pages/home/HowItWorks';
-import FamilyGlenExplainer from '@/pages/home/FamilyGlenExplainer';
-import { useWhiteLabel } from '@/context/WhiteLabelContext';
 
-// LivingGlen active-life palette. Kept local so MemoryGlen's forest/brass
-// design tokens are never touched.
-const LG_EMERALD = '#059669';
-const LG_MINT = '#D1FAE5';
-const LG_STONE = '#F5F5F4';
-
-/* ---------- Section 5 — Feature grid ---------- */
-const FEATURES = [
-  { Icon: Images, title: 'Photo & Video Gallery', body: 'Every photograph, every clip — kept in one permanent, beautiful place.' },
-  { Icon: Mic, title: 'Voice Notes', body: 'A voice saved — a birthday wish, a blessing, a laugh — kept forever.' },
-  { Icon: Music, title: 'Song Playlists', body: 'Compile the songs they loved from Spotify, YouTube, or your own recordings. On every memorial.' },
-  { Icon: Video, title: 'Funeral Livestreams', body: 'The diaspora killer feature — the recording stays in the family hub forever.' },
-  { Icon: QrCode, title: 'QR Code Plaques', body: 'A brass plaque on the headstone that opens the memorial — every visit finds every memory.' },
-  { Icon: BookOpen, title: 'Memorial Books', body: 'The story, tributes, and photographs printed and bound for the family shelf.' },
-  { Icon: ShieldCheck, title: 'Family Control', body: 'Guardians approve all content. Full privacy control.' },
-  { Icon: Flame, title: 'Digital Candles', body: 'Light a candle from anywhere in the world. The flames never go out.' },
-];
-
-function FeatureGrid() {
-  return (
-    <section className="section-pad" aria-labelledby="features-heading">
-      <div className="container-content">
-        <Reveal>
-          <p className="eyebrow eyebrow-centered">EVERYTHING A MEMORY DESERVES</p>
-          <h2 id="features-heading" className="type-h2 mt-4 text-center text-body">
-            A sanctuary, fully furnished.
-          </h2>
-        </Reveal>
-        <ul className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map(({ Icon, title, body }, i) => (
-            <Reveal as="li" key={title} delay={(i % 4) * 0.08}>
-              <div className="card-well group h-full p-6 transition-transform duration-200 hover:-translate-y-0.5">
-                <Icon
-                  size={24}
-                  aria-hidden
-                  className="text-evergreen transition-colors duration-200 group-hover:text-brass"
-                />
-                <h3 className="type-h3 mt-4 text-body">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-soft">{body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Section 6 — The Five Tabs teaser ---------- */
-const FIVE_TABS = [
-  {
-    title: 'The Journey',
-    line: 'From the moment the news arrives to the moment they rest.',
-    img: '/john-journey-border.jpg',
-    href: '/memorials/john-peters?tab=journey',
-  },
-  {
-    title: 'The Memorial',
-    line: 'Story, gallery, voice, song, candles.',
-    img: '/john-portrait.jpg',
-    href: '/memorials/john-peters?tab=memorial',
-  },
-  {
-    title: 'Family Glen',
-    line: "Your family's own cemetery, designed by you.",
-    img: '/glen-grove-earthly.jpg',
-    href: '/memorials/john-peters?tab=glen',
-  },
-  {
-    title: 'Family Tree',
-    line: 'Woven as you add the people you love.',
-    img: null, // tree motif
-    href: '/memorials/john-peters?tab=tree',
-  },
-  {
-    title: 'Living Legacy',
-    line: 'Decide how the world remembers you.',
-    img: '/living-legacy-hero.jpg',
-    href: '/memorials/john-peters?tab=legacy',
-  },
-];
-
-function FiveTabs() {
-  return (
-    <section className="section-pad bg-forest" aria-labelledby="five-tabs-heading">
-      <div className="container-content">
-        <Reveal>
-          <p className="eyebrow !text-sage">THE FIVE-ROOM MEMORIAL</p>
-          <h2 id="five-tabs-heading" className="type-h2 mt-4 text-bone">
-            One memorial. Five rooms.
-          </h2>
-        </Reveal>
-        <ul className="mt-14 grid snap-x snap-mandatory grid-flow-col gap-6 overflow-x-auto pb-4 [grid-auto-columns:80%] sm:[grid-auto-columns:46%] lg:grid-flow-row lg:grid-cols-5 lg:overflow-visible lg:[grid-auto-columns:unset]">
-          {FIVE_TABS.map((tab, i) => (
-            <Reveal as="li" key={tab.title} delay={i * 0.1} className="snap-start">
-              <Link
-                to={tab.href}
-                className="group flex h-full flex-col rounded-sm border border-brass/30 bg-forest-deep p-3 transition-colors duration-300 hover:border-brass"
-              >
-                <div className="aspect-[3/4] overflow-hidden rounded-sm">
-                  {tab.img ? (
-                    <img
-                      src={tab.img}
-                      alt=""
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-forest-soft">
-                      <img
-                        src="/logo-mark.svg"
-                        alt=""
-                        width={96}
-                        height={96}
-                        className="transition-transform duration-300 group-hover:scale-[1.03]"
-                      />
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col p-3">
-                  <h3 className="font-display text-xl text-bone">{tab.title}</h3>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed text-sage">{tab.line}</p>
-                  <span className="link-arrow mt-4 !text-brass-soft">
-                    Explore <ArrowRight size={14} aria-hidden />
-                  </span>
-                </div>
-              </Link>
-            </Reveal>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Section 7 — Stats band ---------- */
-function HomeStats() {
-  return (
-    <section className="bg-forest-deep py-14" aria-label="MemoryGlen in numbers">
-      <div className="container-content">
-        {/* These were '500+ Families Served', '200+ Livestreams', '1K+ QR Codes'
-            and '50+ Partner Parlours'. MemoryGlen has not launched, so every one
-            of those numbers was untrue. Claiming traction you do not have is the
-            fastest way to lose the trust this product depends on, and it is the
-            kind of thing an investor checks.
-
-            Replaced with what is actually true today. Put real numbers back the
-            day they are real, and not before. */}
-        <div className="mx-auto max-w-reading text-center">
-          <p className="type-quote text-bone">
-            Built for families across Zimbabwe, South Africa and the diaspora —
-            wherever a memorial link needs to reach.
-          </p>
-          <p className="type-meta mt-4 text-sage">
-            A memorial is free to create and stays free to visit.
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Section 8 — Partner bands ---------- */
-const PARTNERS = [
-  {
-    img: '/parlour-hero.jpg',
-    title: 'Your brand. Your families. Powered by MemoryGlen.',
-    body: 'White-label memorial portals under your own name. Sign families up from your own website.',
-    cta: 'Become a Partner',
-    href: '/funeral-parlours',
-    alt: 'A dignified funeral-home reception in warm wood and soft light',
-  },
-  {
-    img: '/society-hero.jpg',
-    title: 'No more 3AM WhatsApp chaos.',
-    body: 'From R10 per member per month — under 50c a day.',
-    cta: 'For Societies & Stokvels',
-    href: '/burial-societies',
-    alt: 'Hands of a circle of people passing a ledger book at golden hour',
-  },
-];
-
-function PartnerBands() {
-  return (
-    <section aria-label="For funeral parlours and burial societies">
-      <div className="grid md:grid-cols-2">
-        {PARTNERS.map((p) => (
-          <Reveal key={p.title}>
-            <Link to={p.href} className="group relative block min-h-[380px] overflow-hidden">
-              <img
-                src={p.img}
-                alt={p.alt}
-                loading="lazy"
-                className="absolute inset-0 h-full w-full object-cover transition-transform [transition-duration:600ms] group-hover:scale-[1.04]"
-              />
-              <div aria-hidden className="absolute inset-0 bg-forest-deep/70" />
-              <div className="relative flex min-h-[380px] flex-col justify-end p-8 md:p-12">
-                <h3 className="type-h3 max-w-md !text-[1.5rem] text-bone">{p.title}</h3>
-                <p className="mt-3 max-w-md text-sm leading-relaxed text-bone/80">{p.body}</p>
-                <span className="btn btn-evergreen mt-6 w-fit">{p.cta}</span>
-              </div>
-            </Link>
-          </Reveal>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Section 9 — Closing CTA ---------- */
-function ClosingCta() {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-20% 0px' });
-  const [ignited, setIgnited] = useState(false);
-  if (inView && !ignited) setIgnited(true);
-
-  return (
-    <section ref={ref} className="section-pad" aria-labelledby="closing-heading">
-      <div className="container-content flex flex-col items-center text-center">
-        {/* The one signature flourish — the flame ignites on entry */}
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={ignited ? { scale: 1, opacity: 1 } : {}}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <CandleFlame size={28} lit={ignited} />
-        </motion.div>
-        <Reveal>
-          <hr className="brass-rule mx-auto mt-8" />
-          <h2 id="closing-heading" className="type-h2 mt-8 max-w-reading text-body">
-            Start preserving memories today.
-          </h2>
-          <p className="type-story mt-4 text-soft">Create a free memorial in minutes. It stays forever.</p>
-          <Link to="/create" className="btn btn-evergreen mt-8">
-            Create a Memorial — free
-          </Link>
-          <p className="mt-6 text-sm text-soft">
-            Questions? Write to{' '}
-            <a href="mailto:admin@memoryglen.com" className="text-evergreen underline underline-offset-4">
-              admin@memoryglen.com
-            </a>
-          </p>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-/* ==========================================================================
-   LivingGlen (livingglen.com) — active Life Operating System home sections.
-   These render ONLY when isLivingGlen is true. No memorial / funeral / tribute
-   content appears on the LivingGlen home. Emerald / mint / stone palette,
-   kept local so MemoryGlen tokens are untouched.
-   ========================================================================== */
-
-/* ---------- LivingGlen §1 — Group Glens showcase ---------- */
-const GROUP_GLENS = [
-  { Icon: Heart, title: 'Family Circles', body: 'A shared living space for your whole family — births, milestones, weekly moments, all in one private circle.' },
-  { Icon: GraduationCap, title: 'School Alumni Cohorts', body: 'Reunite your class year. Keep the group story growing long after graduation day.' },
-  { Icon: Trophy, title: 'Sports Teams', body: 'Seasons, wins, and the people who made them. A living record for the whole squad.' },
-];
-
-function GroupGlensShowcase() {
-  return (
-    <section id="group-glens" className="section-pad scroll-mt-24" style={{ backgroundColor: LG_STONE }} aria-labelledby="group-glens-heading">
-      <div className="container-content">
-        <Reveal>
-          <p className="eyebrow" style={{ color: LG_EMERALD }}>GROUP GLENS</p>
-          <h2 id="group-glens-heading" className="type-h2 mt-4 text-body">
-            Every circle you belong to, alive in one place.
-          </h2>
-          <p className="type-story mt-4 max-w-reading text-soft">
-            Start a shared Glen for the people you do life with — and let everyone add to the story as it happens.
-          </p>
-        </Reveal>
-        <ul className="mt-14 grid gap-6 sm:grid-cols-3">
-          {GROUP_GLENS.map(({ Icon, title, body }, i) => (
-            <Reveal as="li" key={title} delay={i * 0.08}>
-              <div
-                className="group h-full rounded-lg p-7 transition-transform duration-200 hover:-translate-y-0.5"
-                style={{ backgroundColor: '#ffffff', border: `1px solid ${LG_MINT}` }}
-              >
-                <span
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full"
-                  style={{ backgroundColor: LG_MINT, color: LG_EMERALD }}
-                >
-                  <Icon size={22} aria-hidden />
-                </span>
-                <h3 className="type-h3 mt-5 text-body">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-soft">{body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </ul>
-        <Reveal>
-          <Link
-            to="/plans"
-            className="btn mt-10 inline-flex min-h-12"
-            style={{ backgroundColor: LG_EMERALD, color: '#ffffff', borderColor: LG_EMERALD }}
-          >
-            Start a Group Glen <ArrowRight size={16} aria-hidden />
-          </Link>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- LivingGlen §2 — Time Capsules & Milestone cards ---------- */
-const TIME_CAPSULES = [
-  { Icon: Mic, title: 'Voice Notes', body: 'Record a message today, delivered to future you — or to someone you love, on a date you choose.' },
-  { Icon: Clock, title: 'Anniversary Archives', body: 'Bundle a year of moments into a capsule that opens on the day that matters.' },
-  { Icon: Sparkles, title: 'Milestone Cards', body: 'Mark first steps, new jobs, big moves — each one saved to your living record forever.' },
-];
-
-function TimeCapsules() {
-  return (
-    <section id="time-capsules" className="section-pad scroll-mt-24" style={{ backgroundColor: '#ffffff' }} aria-labelledby="time-capsules-heading">
-      <div className="container-content">
-        <Reveal>
-          <p className="eyebrow" style={{ color: LG_EMERALD }}>TIME CAPSULES & MILESTONES</p>
-          <h2 id="time-capsules-heading" className="type-h2 mt-4 text-body">
-            Capture the moment now. Open it when it counts.
-          </h2>
-        </Reveal>
-        <ul className="mt-14 grid gap-6 sm:grid-cols-3">
-          {TIME_CAPSULES.map(({ Icon, title, body }, i) => (
-            <Reveal as="li" key={title} delay={i * 0.08}>
-              <div
-                className="h-full rounded-lg p-7"
-                style={{ backgroundColor: LG_STONE, border: `1px solid ${LG_MINT}` }}
-              >
-                <Icon size={24} aria-hidden style={{ color: LG_EMERALD }} />
-                <h3 className="type-h3 mt-4 text-body">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-soft">{body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- LivingGlen §3 — Service Provider & Partner marketplace preview ---------- */
-function ServiceProviderPreview() {
-  return (
-    <section className="section-pad" style={{ backgroundColor: LG_STONE }} aria-labelledby="providers-heading">
-      <div className="container-content">
-        <div className="grid items-center gap-10 md:grid-cols-2">
-          <Reveal>
-            <p className="eyebrow" style={{ color: LG_EMERALD }}>SERVICE PROVIDER MARKETPLACE</p>
-            <h2 id="providers-heading" className="type-h2 mt-4 text-body">
-              The partners who help you live it well.
-            </h2>
-            <p className="type-story mt-4 text-soft">
-              Photographers, celebrants, printers and planners — a curated directory of providers to bring your milestones to life. List your service or find the right partner.
-            </p>
-            <Link
-              to="/service-providers"
-              className="btn mt-8 inline-flex min-h-12"
-              style={{ backgroundColor: LG_EMERALD, color: '#ffffff', borderColor: LG_EMERALD }}
-            >
-              Explore Service Providers <ArrowRight size={16} aria-hidden />
-            </Link>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <div
-              className="flex flex-col gap-4 rounded-lg p-7"
-              style={{ backgroundColor: '#ffffff', border: `1px solid ${LG_MINT}` }}
-            >
-              {[
-                { Icon: Store, label: 'Featured providers, vetted for quality' },
-                { Icon: Users, label: 'Trusted by Group Glens across the network' },
-                { Icon: ShieldCheck, label: 'Secure, private, and always your call' },
-              ].map(({ Icon, label }) => (
-                <div key={label} className="flex items-center gap-3">
-                  <span
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                    style={{ backgroundColor: LG_MINT, color: LG_EMERALD }}
-                  >
-                    <Icon size={18} aria-hidden />
-                  </span>
-                  <p className="text-sm text-body">{label}</p>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- LivingGlen §4 — Closing CTA ---------- */
-function LivingGlenClosingCta() {
-  return (
-    <section className="section-pad" style={{ backgroundColor: '#042f25' }} aria-labelledby="lg-closing-heading">
-      <div className="container-content flex flex-col items-center text-center">
-        <Sparkles size={28} aria-hidden style={{ color: LG_MINT }} />
-        <h2 id="lg-closing-heading" className="type-h2 mt-6 max-w-reading" style={{ color: '#ffffff' }}>
-          Start authoring your story today.
-        </h2>
-        <p className="type-story mt-4" style={{ color: LG_MINT }}>
-          Your living record — milestones, voices, and time capsules — begins in minutes.
-        </p>
-        <Link
-          to="/plans"
-          className="btn mt-8 inline-flex min-h-12"
-          style={{ backgroundColor: LG_EMERALD, color: '#ffffff', borderColor: LG_EMERALD }}
-        >
-          Start Your Living Record
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-/** Home — `/` (home.md). Parchment by day / Dusk after sunset; no provider rail.
- *
- * Domain-aware: on livingglen.com (isLivingGlen) the page renders the active
- * LivingGlen sections only — Group Glens, Time Capsules, Service Providers and
- * a living-record CTA. It never renders JohnDemo, the five-room memorial teaser,
- * the memorial feature grid, the stats band or the funeral/society partner
- * bands. memoryglen.com renders the original memorial home unchanged. */
-export default function Home() {
+export const Home: React.FC = () => {
   const { isLivingGlen } = useWhiteLabel();
+  const [activeStage, setActiveStage] = useState(0);
 
-  if (isLivingGlen) {
-    return (
-      <>
-        <Hero />
-        <GroupGlensShowcase />
-        <TimeCapsules />
-        <ServiceProviderPreview />
-        <LivingGlenClosingCta />
-      </>
-    );
+  if (!isLivingGlen) {
+    return <div className="p-8 text-center text-stone-400">MemoryGlen Legacy Platform View</div>;
   }
 
+  const lifeStages = [
+    {
+      id: 'family',
+      stage: 'Stage 1 · Roots',
+      title: 'Family Glen',
+      icon: Users,
+      bgHex: '#C45C26',
+      borderClass: 'border-[#C45C26]',
+      textClass: 'text-[#C45C26]',
+      bgLightClass: 'bg-[#C45C26]/10',
+      description: 'The foundation of belonging. Preserve lineage, family trees, grandparent voice recordings, and shared traditions across generations.',
+      story: 'The Miller Circle: Family members across London, Toronto, and Sydney updating a unified family tree, sharing audio stories, and uploading holiday albums in real time.',
+      tags: ['Family Heritage', 'Intergenerational Audio', 'Shared Albums', 'Private Vaults'],
+    },
+    {
+      id: 'alumni',
+      stage: 'Stage 2 · Formation',
+      title: 'Alumni Glen',
+      icon: GraduationCap,
+      bgHex: '#3B3B98',
+      borderClass: 'border-[#3B3B98]',
+      textClass: 'text-[#3B3B98]',
+      bgLightClass: 'bg-[#3B3B98]/10',
+      description: 'The space of learning and growth. Reconnect with school cohorts, university residences, research groups, and mentorship circles.',
+      story: 'Class of 2018 Hub: 60 graduates maintaining a permanent circle for career updates, reunion planning, and student throwback photos.',
+      tags: ['Class Rosters', 'Mentorship Threads', 'Academic Archives', 'Reunion Planning'],
+    },
+    {
+      id: 'arena',
+      stage: 'Stage 3 · Mastery',
+      title: 'Arena Glen',
+      icon: Flame,
+      bgHex: '#E85D04',
+      borderClass: 'border-[#E85D04]',
+      textClass: 'text-[#E85D04]',
+      bgLightClass: 'bg-[#E85D04]/10',
+      description: 'The arena of passion and discipline. Capture sports team seasons, athletic records, creative crafts, and performance journals.',
+      story: 'Metro Rowing Squad: Teammates logging race replays, medal ceremonies, and coaching wisdom that carry into lifelong friendships.',
+      tags: ['Athletic Logs', 'Team Replays', 'Creative Crafts', 'Tournament Archives'],
+    },
+    {
+      id: 'crossroads',
+      stage: 'Stage 4 · Encounters',
+      title: 'Crossroads Glen',
+      icon: Compass,
+      bgHex: '#D4A017',
+      borderClass: 'border-[#D4A017]',
+      textClass: 'text-[#D4A017]',
+      bgLightClass: 'bg-[#D4A017]/10',
+      description: 'The unscripted journeys. Document spontaneous roadtrips, pivotal life pivots, wisdom from strangers, and hard-won lessons.',
+      story: 'Coast-to-Coast Roadtrip 2024: Friends geotagging roadside encounters, recording travel audio clips, and documenting unexpected life advice.',
+      tags: ['GPS Travel Logs', 'Stranger Wisdom', 'Life Lessons', 'Roadtrip Journals'],
+    },
+    {
+      id: 'horizon',
+      stage: 'Stage 5 · Continuity',
+      title: 'Horizon Glen',
+      icon: Sparkles,
+      bgHex: '#0D7377',
+      borderClass: 'border-[#0D7377]',
+      textClass: 'text-[#0D7377]',
+      bgLightClass: 'bg-[#0D7377]/10',
+      description: 'Looking into the future. Lock time capsules for future birthdays, write letters to your future self, and log ongoing milestone anniversaries.',
+      story: 'Letter on a 30th Birthday: A founder sealing a video time capsule on launch day set to automatically unlock on their 40th birthday.',
+      tags: ['Time Capsules', 'Vision Boards', 'Anniversary Archives', 'Future Unlocks'],
+    },
+  ];
+
   return (
-    <>
-      <Hero />
-      {/* Explain the product before showing it off: three steps, then the one
-          piece of jargon the whole site depends on. */}
-      <HowItWorks />
-      <FamilyGlenExplainer />
-      <JohnDemo />
-      <FiveTabs />
-      <FeatureGrid />
-      <HomeStats />
-      <PartnerBands />
-      <ClosingCta />
-    </>
+    <div className="min-h-screen bg-[#1C2526] text-stone-100 font-sans">
+      {/* Universal Hero Section */}
+      <section className="relative overflow-hidden pt-20 pb-24 px-4 sm:px-6 lg:px-8 border-b border-stone-800">
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#C9A227] text-xs font-bold uppercase tracking-widest mb-6">
+            <Globe className="w-3.5 h-3.5" /> LIVINGGLEN · ACTIVE LIFE OPERATING SYSTEM
+          </div>
+          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white mb-6 leading-tight">
+            Where You Live and Author <span className="text-[#C9A227]">Your Story</span>
+          </h1>
+          <p className="text-lg sm:text-xl text-stone-300 max-w-3xl mx-auto mb-10 leading-relaxed">
+            A universal digital home to capture daily milestones, spontaneous encounters, voice memories, and time capsules as they happen—owned by you, shared with your inner circle.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="/plans" className="px-8 py-4 bg-[#C9A227] hover:bg-[#b08d1e] text-stone-950 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+              Start Your Living Record <ChevronRight className="w-5 h-5" />
+            </a>
+            <a href="#life-stages" className="px-8 py-4 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold rounded-xl border border-stone-700 transition-all flex items-center justify-center gap-2">
+              Explore the 5 Life Stages
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Pillar Explanation Banner */}
+      <section className="py-16 bg-stone-900 border-b border-stone-800">
+        <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="p-6 rounded-2xl bg-stone-950/60 border border-stone-800">
+            <div className="w-12 h-12 bg-[#C45C26]/20 text-[#C45C26] rounded-xl flex items-center justify-center mb-4">
+              <Users className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Group Glens</h3>
+            <p className="text-stone-400 text-sm leading-relaxed">
+              Shared living spaces for families, travel crews, and alumni cohorts. Never lose cherished photos or voice notes in buried chat streams.
+            </p>
+          </div>
+          <div className="p-6 rounded-2xl bg-stone-950/60 border border-stone-800">
+            <div className="w-12 h-12 bg-[#D4A017]/20 text-[#D4A017] rounded-xl flex items-center justify-center mb-4">
+              <Clock className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Time Capsules</h3>
+            <p className="text-stone-400 text-sm leading-relaxed">
+              Time-locked video, audio, and written messages set to unlock on future birthdays, wedding anniversaries, or graduation days.
+            </p>
+          </div>
+          <div className="p-6 rounded-2xl bg-stone-950/60 border border-stone-800">
+            <div className="w-12 h-12 bg-[#0D7377]/20 text-[#0D7377] rounded-xl flex items-center justify-center mb-4">
+              <Calendar className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Milestone Archives</h3>
+            <p className="text-stone-400 text-sm leading-relaxed">
+              Structured living timelines for births, weddings, home purchases, and career victories that grow richer every passing year.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 5 Life Stages Section */}
+      <section id="life-stages" className="py-20 px-4 max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
+            The 5 Universal Life Stages
+          </h2>
+          <p className="text-stone-400 max-w-2xl mx-auto">
+            From childhood origins to spontaneous roadtrips and future time capsules—explore how LivingGlen organizes every phase of human experience.
+          </p>
+        </div>
+
+        {/* Tab Selection Row */}
+        <div className="flex flex-wrap justify-center gap-3 mb-10">
+          {lifeStages.map((stage, idx) => {
+            const Icon = stage.icon;
+            const isSelected = activeStage === idx;
+            return (
+              <button
+                key={stage.id}
+                onClick={() => setActiveStage(idx)}
+                style={{
+                  backgroundColor: isSelected ? stage.bgHex : 'rgba(38, 38, 38, 0.8)',
+                  borderColor: isSelected ? stage.bgHex : '#374151',
+                }}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border ${
+                  isSelected ? 'text-white shadow-lg scale-105' : 'text-stone-300 hover:bg-stone-800'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {stage.title}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active Stage Card Render */}
+        {(() => {
+          const current = lifeStages[activeStage];
+          const Icon = current.icon;
+          return (
+            <div className="bg-stone-900 rounded-3xl p-8 sm:p-12 border border-stone-800 shadow-2xl grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              <div>
+                <span className={`text-xs font-black uppercase tracking-widest block mb-2 ${current.textClass}`}>
+                  {current.stage}
+                </span>
+                <h3 className="text-3xl font-extrabold text-white mb-4 flex items-center gap-3">
+                  <div className="p-3 rounded-xl text-white" style={{ backgroundColor: current.bgHex }}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  {current.title}
+                </h3>
+                <p className="text-stone-300 text-base leading-relaxed mb-6">
+                  {current.description}
+                </p>
+
+                <div className={`p-4 rounded-r-xl border-l-4 mb-6 ${current.borderClass} ${current.bgLightClass}`}>
+                  <span className="text-xs font-bold uppercase tracking-wider text-stone-400 block mb-1">
+                    Real Life Scenario
+                  </span>
+                  <p className="text-stone-200 italic text-sm leading-relaxed">
+                    "{current.story}"
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {current.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold border ${current.bgLightClass} ${current.borderClass} ${current.textClass}`}
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mock Glen Vault Card */}
+              <div className="bg-stone-950 text-white rounded-2xl p-6 border border-stone-800 relative shadow-inner min-h-[320px] flex flex-col justify-between">
+                <div className="flex items-center justify-between text-xs text-stone-400 border-b border-stone-800/80 pb-3">
+                  <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-[#C9A227]" /> Geotagged Active Record</span>
+                  <span className="flex items-center gap-1.5"><Mic className="w-3.5 h-3.5 text-emerald-400" /> Audio Vault Active</span>
+                </div>
+
+                <div className="my-6">
+                  <div className="w-12 h-12 rounded-xl text-white flex items-center justify-center mb-4" style={{ backgroundColor: current.bgHex }}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <p className="text-xl font-bold text-white mb-2">{current.title} Vault</p>
+                  <p className="text-stone-400 text-sm leading-relaxed">
+                    Photos, audio reflections, GPS pins, and documents are encrypted and synced to authorized group members across devices.
+                  </p>
+                </div>
+
+                <div className="flex justify-between items-center text-xs text-stone-500 pt-3 border-t border-stone-800/80">
+                  <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> Circle Privacy Active</span>
+                  <span className="font-mono text-[#C9A227]">STATUS: ACTIVE_OS</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+      </section>
+    </div>
   );
-}
+};
