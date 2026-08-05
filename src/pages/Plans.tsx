@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Shield, Users, Clock, Sparkles, ChevronRight, Globe } from 'lucide-react';
+import { Check, ChevronRight } from 'lucide-react';
 
 export const Plans: React.FC = () => {
   const plans = [
@@ -120,3 +120,5 @@ export const Plans: React.FC = () => {
     </div>
   );
 };
+
+export default Plans;
