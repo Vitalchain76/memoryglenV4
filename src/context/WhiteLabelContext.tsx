@@ -33,13 +33,11 @@ export const WhiteLabelProvider = ({ children }: { children: ReactNode }) => {
     return localStorage.getItem('mg_partner_mode') === 'true';
   });
 
-  const [isLivingGlen, setIsLivingGlen] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsLivingGlen(window.location.hostname.toLowerCase().includes('livingglen'));
-    }
-  }, []);
+  const [isLivingGlen] = useState<boolean>(
+    () =>
+      typeof window !== 'undefined' &&
+      window.location.hostname.toLowerCase().includes('livingglen')
+  );
 
   // Keep the document head in sync with the active brand once the SPA has
   // hydrated. Build-time prerender ships a domain-neutral baseline; this swaps
