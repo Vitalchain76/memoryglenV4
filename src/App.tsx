@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router';
-import Layout from '@/components/Layout';
+import Layout from '@/componZents/Layout';
 import Home from '@/pages/Home';
 import Memorials from '@/pages/Memorials';
 import MemorialVirginia from '@/pages/MemorialVirginia';
