@@ -1,15 +1,24 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router';
 import CandleFlame from '@/components/CandleFlame';
+import { useWhiteLabel } from '@/context/WhiteLabelContext';
 
-const H1_WORDS = ['Where', 'Memories', 'Live', 'Forever.'];
+const MEMORYGLEN_H1_WORDS = ['Where', 'Memories', 'Live', 'Forever.'];
+const LIVINGGLEN_H1_WORDS = ['Where', 'You', 'Live', 'and', 'Author', 'Your', 'Story.'];
 
 /**
  * Hero — home.md §1. Full-bleed /hero-home.jpg with forest-deep scrim,
  * content bottom-left, word-level H1 rise (90ms stagger), CTAs, and the
  * quiet candle proof-of-life at bottom-right. No scroll pin — restraint.
+ *
+ * Domain-aware copy: on livingglen.com (isLivingGlen from WhiteLabelContext)
+ * this renders the LivingGlen "Active Life" messaging. On memoryglen.com
+ * the original MemoryGlen memorial copy is left completely unchanged.
  */
 export default function Hero() {
+  const { isLivingGlen } = useWhiteLabel();
+  const h1Words = isLivingGlen ? LIVINGGLEN_H1_WORDS : MEMORYGLEN_H1_WORDS;
+
   return (
     <section className="relative flex min-h-[calc(100dvh-72px)] flex-col justify-end overflow-hidden bg-forest-deep">
       {/* Image — scales 1.06 → 1.0 over 1.8s on load */}
@@ -36,12 +45,12 @@ export default function Hero() {
             transition={{ duration: 0.3, delay: 0.2 }}
             className="eyebrow !text-sage"
           >
-            MEMORYGLEN · SOUTH AFRICA &amp; ZIMBABWE
+            {isLivingGlen ? 'LIVINGGLEN · ACTIVE LIFE OPERATING SYSTEM' : 'MEMORYGLEN · SOUTH AFRICA & ZIMBABWE'}
           </motion.p>
 
           <h1 className="type-h1 mt-5 text-bone">
-            {H1_WORDS.map((word, i) => (
-              <span key={word} className="inline-block overflow-hidden pb-1 align-bottom">
+            {h1Words.map((word, i) => (
+              <span key={word + '-' + i} className="inline-block overflow-hidden pb-1 align-bottom">
                 <motion.span
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -49,7 +58,7 @@ export default function Hero() {
                   className="inline-block"
                 >
                   {word}
-                  {i < H1_WORDS.length - 1 ? ' ' : ''}
+                  {i < h1Words.length - 1 ? ' ' : ''}
                 </motion.span>
               </span>
             ))}
@@ -61,8 +70,9 @@ export default function Hero() {
             transition={{ duration: 0.4, delay: 0.9 }}
             className="type-story mt-5 max-w-xl text-bone/85"
           >
-            Build a lasting memorial for someone you love — their story, their photographs,
-            their voice — and invite your family to add to it from anywhere in the world.
+            {isLivingGlen
+              ? 'A secure living archive to capture daily milestones, preserve voice memories, time capsules, and author your personal story as it happens.'
+              : 'Build a lasting memorial for someone you love — their story, their photographs, their voice — and invite your family to add to it from anywhere in the world.'}
           </motion.p>
 
           <motion.div
@@ -72,12 +82,18 @@ export default function Hero() {
             className="mt-8 flex flex-wrap gap-4"
           >
             <Link to="/create" className="btn btn-evergreen min-h-12">
-              Create a Memorial
+              {isLivingGlen ? 'Start Your Living Record' : 'Create a Memorial'}
             </Link>
             {/* Secondary must land on a real, populated memorial — not the directory. */}
-            <Link to="/memorials/john-peters" className="btn btn-outline-bone min-h-12">
-              View Demo Memorial
-            </Link>
+            {isLivingGlen ? (
+              <Link to="/service-providers" className="btn btn-outline-bone min-h-12">
+                Explore Service Providers
+              </Link>
+            ) : (
+              <Link to="/memorials/john-peters" className="btn btn-outline-bone min-h-12">
+                View Demo Memorial
+              </Link>
+            )}
           </motion.div>
         </div>
       </div>
