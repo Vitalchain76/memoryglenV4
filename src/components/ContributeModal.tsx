@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
+import { validateImageHeader, sanitizeMediaUrl } from '@/lib/mediaUtils';
 
 interface TimelineEventOption {
   id: string;
@@ -66,6 +67,7 @@ export default function ContributeModal({ lifeRecordId, targetEvents, onClose, o
   const [targetEventId, setTargetEventId] = useState('');
   const [storyText, setStoryText] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [mediaUrlInput, setMediaUrlInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -92,7 +94,10 @@ export default function ContributeModal({ lifeRecordId, targetEvents, onClose, o
       const mediaUrls: string[] = [];
 
       if (file) {
-        const compressed = file.type.startsWith('image/') ? await compressImageToWebP(file) : file;
+        if (!(await validateImageHeader(file))) {
+          throw new Error('That file doesn’t look like a real photograph. Please choose a JPG, PNG, WEBP or HEIC image.');
+        }
+        const compressed = await compressImageToWebP(file);
         const path = `contributions/${lifeRecordId}/${crypto.randomUUID()}.webp`;
         const { error: uploadErr } = await supabase.storage
           .from('media')
@@ -102,6 +107,14 @@ export default function ContributeModal({ lifeRecordId, targetEvents, onClose, o
 
         const { data: publicUrl } = supabase.storage.from('media').getPublicUrl(path);
         mediaUrls.push(publicUrl.publicUrl);
+      }
+
+      if (mediaUrlInput.trim()) {
+        const link = sanitizeMediaUrl(mediaUrlInput);
+        if (!link.isValid) {
+          throw new Error('That link doesn’t look like a supported photo or video URL.');
+        }
+        mediaUrls.push(link.sanitizedUrl);
       }
 
       const sanitizedStory = sanitizePlainText(storyText, 4000);
@@ -175,6 +188,18 @@ export default function ContributeModal({ lifeRecordId, targetEvents, onClose, o
               accept="image/*"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="w-full max-w-full box-border text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-[#2D3748] mb-1">
+              Or link to a photo / YouTube / Vimeo video (optional)
+            </label>
+            <input
+              type="url"
+              value={mediaUrlInput}
+              onChange={(e) => setMediaUrlInput(e.target.value)}
+              placeholder="https://…"
+              className="w-full max-w-full box-border rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}

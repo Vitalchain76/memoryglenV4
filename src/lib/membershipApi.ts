@@ -79,20 +79,15 @@ export async function joinMemorial(
 
   if (code) {
     const { data: invite } = await supabase
-      .from('memorial_invites')
-      .select('role, email, expires_at')
-      .eq('invite_code', code)
-      .eq('memorial_slug', memorialSlug)
+      .rpc('redeem_invite_code', { p_memorial_slug: memorialSlug, p_invite_code: code })
       .maybeSingle();
 
-    const notExpired =
-      invite && (!invite.expires_at || new Date(invite.expires_at) > new Date());
     const emailMatches =
       invite &&
       (!invite.email ||
         invite.email.toLowerCase() === (user.email || '').toLowerCase());
 
-    if (!invite || !notExpired || !emailMatches) {
+    if (!invite || !emailMatches) {
       return { success: false, error: 'Invalid or expired invitation code.' };
     }
 
