@@ -12,16 +12,29 @@
 -- that actually exist: memorial_invites, memorial_members, funeral_notices,
 -- time_capsules and memorial_media.
 --
--- STILL OPEN, NOT FIXABLE FROM THIS REPO: `pending_contributions` and
--- `timeline_events` are read/written by src/components/ContributeModal.tsx
--- and src/components/OwnerModerationQueue.tsx, and `profiles.is_admin` is
--- referenced by src/lib/phase2Api.ts's admin gating, but none of the three
--- have a CREATE TABLE / ALTER TABLE / column anywhere in this repository.
--- Pull the live schema (Supabase dashboard → Database, or `supabase db
--- dump`) before assuming these are secured — if they exist live with RLS
--- disabled or an open policy, they are the largest remaining exposure,
--- since pending_contributions accepts public, unauthenticated inserts tied
--- to a life_record_id.
+-- UPDATE 2026-08-06, against a live-schema diagnostic: `pending_contributions`
+-- and `timeline_events` are handled in
+-- supabase/migrations/20260806_02_contributions_and_timeline.sql (its column
+-- set was corrected to match the live table exactly — no contributor_id, no
+-- updated_at). `live_streams` is handled in
+-- supabase/migrations/20260806_03_live_streams.sql. `profiles.is_admin` is
+-- still open — referenced by src/lib/phase2Api.ts's admin gating, no column
+-- or migration for it anywhere, live schema not yet checked.
+--
+-- CRITICAL PREREQUISITE: the same diagnostic confirmed `memorial_invites` and
+-- `memorial_members` do NOT exist live. Both are defined — correctly, with
+-- their own initial RLS and the is_active_member() helper this migration
+-- also depends on — in supabase/migrations/20260731_gated_membership_and_invites.sql,
+-- which is already in this repo and has apparently never been run against
+-- production. This migration does NOT recreate those tables; it only tightens
+-- policies on top of them, so it will error (relation/function does not
+-- exist) unless 20260731 runs first. This also means funeral_notices,
+-- family_contributions and anniversary_messages are CURRENTLY LIVE with
+-- their ORIGINAL, pre-20260731 policies — public unrestricted SELECT on all
+-- three, and unrestricted INSERT on family_contributions/anniversary_messages
+-- — since the migration that was supposed to gate them on active membership
+-- never applied. Run every migration in supabase/migrations/ in filename
+-- order, not just this file, before assuming any of this is fixed.
 
 -- --------------------------------------------------------------------
 -- 1. memorial_invites: close a full-table enumeration leak.

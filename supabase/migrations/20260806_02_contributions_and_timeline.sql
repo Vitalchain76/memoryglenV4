@@ -122,18 +122,24 @@ create policy timeline_events_update on public.timeline_events
 -- --------------------------------------------------------------------
 -- 2. pending_contributions
 -- --------------------------------------------------------------------
+-- Column set confirmed against a live-schema diagnostic on 2026-08-06:
+-- id, life_record_id, contributor_name, story_text, media_urls, target_event_id,
+-- status, created_at — no contributor_id, no updated_at. An earlier draft of
+-- this migration invented both; since the live table already exists without
+-- them, CREATE TABLE IF NOT EXISTS would have no-op'd and the policies below
+-- that referenced contributor_id would have failed with "column does not
+-- exist" the moment this was run. Matching exactly here so it's correct
+-- whether it's applied to the live table (no-op) or a fresh environment.
 create table if not exists public.pending_contributions (
   id uuid primary key default gen_random_uuid(),
   life_record_id uuid not null references public.life_records(id) on delete cascade,
-  contributor_id uuid references auth.users(id),
   contributor_name text not null,
   story_text text not null,
   media_urls text[] not null default '{}',
   target_event_id uuid references public.timeline_events(id) on delete set null,
   status text not null default 'PENDING_APPROVAL'
     check (status in ('PENDING_APPROVAL', 'APPROVED', 'REJECTED')),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  created_at timestamptz not null default now()
 );
 
 create index if not exists pending_contributions_life_record_idx
@@ -145,26 +151,26 @@ alter table public.pending_contributions enable row level security;
 -- knew them can contribute a memory" flow, matching guestbook_entries'
 -- own anon-insert pattern) — deliberately NOT frozen at MEMORIAL, since
 -- family contributing memories after a death is the point of this table.
--- contributor_id is pinned to the caller's own uid when signed in, and
--- must be null when anonymous, so a submission can never be forged as
--- coming from another real user.
+-- There is no contributor_id column (confirmed against the live schema),
+-- so submissions are anonymous by design, same as guestbook_entries — a
+-- submitter cannot see their own pending item after the fact, matching
+-- how ContributeModal.tsx actually works today (fire-and-forget, no
+-- "your submissions" view exists anywhere in the frontend).
 drop policy if exists "Anyone submit pending contribution" on public.pending_contributions;
 create policy "Anyone submit pending contribution" on public.pending_contributions
   for insert to anon, authenticated
   with check (
     status = 'PENDING_APPROVAL'
-    and (contributor_id is null or contributor_id = auth.uid())
     and exists (select 1 from public.life_records r where r.id = life_record_id)
   );
 
--- The contributor can see their own pending submission (so they know it
--- went through); owner/trustee can see every submission for moderation.
+-- Only the owner/trustee can see pending submissions (moderation queue).
 drop policy if exists "Contributor or steward reads contribution" on public.pending_contributions;
-create policy "Contributor or steward reads contribution" on public.pending_contributions
+drop policy if exists "Steward reads contribution" on public.pending_contributions;
+create policy "Steward reads contribution" on public.pending_contributions
   for select to authenticated
   using (
-    contributor_id = auth.uid()
-    or exists (
+    exists (
       select 1 from public.life_records r
       where r.id = pending_contributions.life_record_id
         and (
