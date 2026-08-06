@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { sanitiseImage } from '@/lib/imageSanitiser';
+import { validateImageHeader } from '@/lib/mediaUtils';
 
 /**
  * Data access for database-backed memorials.
@@ -179,6 +180,9 @@ export async function uploadMedia(
   if (file.size > MAX_UPLOAD_BYTES) {
     const mb = (file.size / 1024 / 1024).toFixed(1);
     return { error: `That photo is ${mb} MB. Please use one under 10 MB.` };
+  }
+  if (!(await validateImageHeader(file))) {
+    return { error: 'That file doesn’t look like a real photograph. Please choose a JPG, PNG, WEBP or HEIC image.' };
   }
 
   // Threat T-09: storage abuse. The bucket's size ceiling caps a single file;

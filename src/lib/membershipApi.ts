@@ -78,21 +78,23 @@ export async function joinMemorial(
   let status: MemberStatus = 'pending';
 
   if (code) {
-    const { data: invite } = await supabase
-      .from('memorial_invites')
-      .select('role, email, expires_at')
-      .eq('invite_code', code)
-      .eq('memorial_slug', memorialSlug)
+    const { data } = await supabase
+      .rpc('redeem_invite_code', { p_memorial_slug: memorialSlug, p_invite_code: code })
       .maybeSingle();
+    // supabase.rpc() infers `{}` for the row type on an unconfigured client
+    // (no Database generic — see src/lib/supabase.ts) when it can't match
+    // the function name against a schema, which is why plain property
+    // access on `data` fails to type-check. Annotated explicitly here to
+    // match what redeem_invite_code() actually returns (see
+    // supabase/migrations/20260806_security_hardening_v2.sql).
+    const invite = data as { role: string; email: string } | null;
 
-    const notExpired =
-      invite && (!invite.expires_at || new Date(invite.expires_at) > new Date());
     const emailMatches =
       invite &&
       (!invite.email ||
         invite.email.toLowerCase() === (user.email || '').toLowerCase());
 
-    if (!invite || !notExpired || !emailMatches) {
+    if (!invite || !emailMatches) {
       return { success: false, error: 'Invalid or expired invitation code.' };
     }
 
