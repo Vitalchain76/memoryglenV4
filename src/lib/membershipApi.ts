@@ -78,9 +78,16 @@ export async function joinMemorial(
   let status: MemberStatus = 'pending';
 
   if (code) {
-    const { data: invite } = await supabase
+    const { data } = await supabase
       .rpc('redeem_invite_code', { p_memorial_slug: memorialSlug, p_invite_code: code })
       .maybeSingle();
+    // supabase.rpc() infers `{}` for the row type on an unconfigured client
+    // (no Database generic — see src/lib/supabase.ts) when it can't match
+    // the function name against a schema, which is why plain property
+    // access on `data` fails to type-check. Annotated explicitly here to
+    // match what redeem_invite_code() actually returns (see
+    // supabase/migrations/20260806_security_hardening_v2.sql).
+    const invite = data as { role: string; email: string } | null;
 
     const emailMatches =
       invite &&
