@@ -43,10 +43,18 @@ function MemorialsRoute() {
  * React and leaving a blank white screen.
  */
 export default function App() {
+  // Gate the B2B pitch / partner header so it never renders for regular
+  // retail visitors on production. It only shows during local dev, or when
+  // explicitly requested via the ?partner=true query string (for live demos).
+  const showPartnerHeader =
+    import.meta.env.DEV === true ||
+    (typeof window !== 'undefined' &&
+      window.location.search.includes('partner=true'));
+
   return (
     <ErrorBoundary>
       <WhiteLabelProvider>
-        <PartnerPortalHeader />
+        {showPartnerHeader && <PartnerPortalHeader />}
         <AuthProvider>
           <Layout>
             <Routes>
